@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Delete, Param, Query, UseGuards, Request }
 import { ViewHistoryService } from './view-history.service';
 import { CreateViewHistoryDto } from './dto/create-view-history.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ViewHistory } from './view-history.entity';
+import { ViewHistory, ViewType } from './view-history.entity';
 
 @Controller('view-history')
 @UseGuards(JwtAuthGuard)
@@ -33,7 +33,7 @@ export class ViewHistoryController {
   @Get('type/:viewType')
   async findByUserAndType(
     @Request() req,
-    @Param('viewType') viewType: string,
+    @Param('viewType') viewType: ViewType,
   ): Promise<ViewHistory[]> {
     return this.viewHistoryService.findByUserAndType(req.user.UserID, viewType);
   }

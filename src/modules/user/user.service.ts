@@ -1,11 +1,21 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { User, UserRole } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserWithoutPassword } from './interfaces/user.interface';
 import * as bcrypt from 'bcrypt';
+
+export interface UserWithoutPassword {
+  UserID: string;
+  Role: UserRole;
+  UserName: string;
+  UserSurname: string;
+  Email: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 @Injectable()
 export class UserService {
@@ -15,27 +25,32 @@ export class UserService {
   ) {}
 
   async findAll(): Promise<UserWithoutPassword[]> {
-    const users = await this.usersRepository.find();
-    return users.map(user => this.excludePassword(user));
+    const users = await this.usersRepository.find({
+      select: ['UserID', 'Role', 'UserName', 'UserSurname', 'Email', 'isActive', 'createdAt', 'updatedAt'],
+    });
+    return users;
   }
 
-  async findOne(id: number): Promise<UserWithoutPassword> {
-    const user = await this.usersRepository.findOne({ where: { id } });
+  async findOne(id: string): Promise<UserWithoutPassword> {
+    const user = await this.usersRepository.findOne({ 
+      where: { UserID: id },
+      select: ['UserID', 'Role', 'UserName', 'UserSurname', 'Email', 'isActive', 'createdAt', 'updatedAt'],
+    });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return this.excludePassword(user);
+    return user;
   }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findOne({ 
-      where: { email },
-      select: ['id', 'name', 'email', 'password', 'isActive', 'createdAt', 'updatedAt']
+      where: { Email: email },
+      select: ['UserID', 'Role', 'UserName', 'UserSurname', 'Email', 'password', 'isActive', 'createdAt', 'updatedAt'],
     });
   }
 
   async create(createUserDto: CreateUserDto): Promise<UserWithoutPassword> {
-    const existingUser = await this.findByEmail(createUserDto.email);
+    const existingUser = await this.findByEmail(createUserDto.Email);
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
@@ -47,48 +62,40 @@ export class UserService {
     });
 
     const savedUser = await this.usersRepository.save(user);
-    return this.excludePassword(savedUser);
+    const { password, ...userWithoutPassword } = savedUser;
+    return userWithoutPassword;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<UserWithoutPassword> {
-    const user = await this.usersRepository.findOne({ where: { id } });
-    if (!user) {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserWithoutPassword> {
+    const updatedUser = await this.usersRepository.findOne({ where: { UserID: id } });
+    if (!updatedUser) {
       throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    
-    if (updateUserDto.email && updateUserDto.email !== user.email) {
-      const existingUser = await this.findByEmail(updateUserDto.email);
-      if (existingUser) {
-        throw new ConflictException('User with this email already exists');
-      }
     }
 
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
 
-    await this.usersRepository.update(id, updateUserDto);
-    const updatedUser = await this.usersRepository.findOne({ where: { id } });
-    if (!updatedUser) {
-      throw new NotFoundException(`User with ID ${id} not found after update`);
-    }
-    return this.excludePassword(updatedUser);
+    Object.assign(updatedUser, updateUserDto);
+    const savedUser = await this.usersRepository.save(updatedUser);
+    const { password, ...userWithoutPassword } = savedUser;
+    return userWithoutPassword;
   }
 
-  async remove(id: number): Promise<void> {
-    const user = await this.usersRepository.findOne({ where: { id } });
+  async remove(id: string): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { UserID: id } });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     await this.usersRepository.remove(user);
   }
 
-  async validatePassword(user: User, password: string): Promise<boolean> {
-    return bcrypt.compare(password, user.password);
-  }
-
-  private excludePassword(user: User): UserWithoutPassword {
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+  async validateUser(email: string, password: string): Promise<UserWithoutPassword | null> {
+    const user = await this.findByEmail(email);
+    if (user && await bcrypt.compare(password, user.password)) {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    }
+    return null;
   }
 }

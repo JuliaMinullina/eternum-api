@@ -1,15 +1,30 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+
+export enum UserRole {
+  ADMIN = 'admin',
+  USER = 'user'
+}
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  UserID: string;
+
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.USER
+  })
+  Role: UserRole;
 
   @Column({ length: 100 })
-  name: string;
+  UserName: string;
+
+  @Column({ length: 100 })
+  UserSurname: string;
 
   @Column({ unique: true })
-  email: string;
+  Email: string;
 
   @Column({ select: false })
   password?: string;
@@ -22,4 +37,7 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany('ViewHistory', 'user')
+  viewHistory: any[];
 }

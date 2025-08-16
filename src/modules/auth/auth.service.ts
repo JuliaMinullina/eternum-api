@@ -1,9 +1,15 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { User } from '../user/user.entity';
+import * as bcrypt from 'bcrypt';
+
+export interface JwtPayload {
+  UserID: string;
+  UserName: string;
+  UserSurname: string;
+  Email: string;
+  Role: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -14,41 +20,45 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.findByEmail(email);
-    if (user && await this.userService.validatePassword(user, password)) {
+    if (user && await bcrypt.compare(password, user.password)) {
       const { password, ...result } = user;
       return result;
     }
     return null;
   }
 
-  async login(loginDto: LoginDto) {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+  async login(user: any) {
+    const payload: JwtPayload = {
+      UserID: user.UserID,
+      UserName: user.UserName,
+      UserSurname: user.UserSurname,
+      Email: user.Email,
+      Role: user.Role,
+    };
 
-    const payload = { email: user.email, sub: user.id };
     return {
       access_token: this.jwtService.sign(payload),
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
+        UserID: user.UserID,
+        UserName: user.UserName,
+        UserSurname: user.UserSurname,
+        Email: user.Email,
+        Role: user.Role,
       },
     };
   }
 
-  async register(registerDto: RegisterDto) {
-    const user = await this.userService.create(registerDto);
-    
-    const payload = { email: user.email, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-    };
+  async verifyToken(token: string): Promise<JwtPayload> {
+    try {
+      const payload = await this.jwtService.verify(token);
+      return payload;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.userService.findOne(userId);
+    return user;
   }
 }

@@ -1,34 +1,21 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Put, 
-  Delete, 
-  Body, 
-  Param, 
-  ParseIntPipe,
-  UseGuards,
-  Request
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserWithoutPassword } from './interfaces/user.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserWithoutPassword } from './interfaces/user.interface';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard)
   async findAll(): Promise<UserWithoutPassword[]> {
     return this.userService.findAll();
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserWithoutPassword> {
+  async findOne(@Param('id') id: string): Promise<UserWithoutPassword> {
     return this.userService.findOne(id);
   }
 
@@ -38,23 +25,21 @@ export class UserController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserWithoutPassword> {
     return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  async remove(@Param('id') id: string): Promise<void> {
     return this.userService.remove(id);
   }
 
-  @Get('profile/me')
   @UseGuards(JwtAuthGuard)
+  @Get('profile/me')
   async getProfile(@Request() req): Promise<UserWithoutPassword> {
-    return this.userService.findOne(req.user.id);
+    return this.userService.findOne(req.user.UserID);
   }
 }

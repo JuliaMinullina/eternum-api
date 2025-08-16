@@ -1,7 +1,11 @@
+import { UserRole } from '../user.entity';
+
 export interface UserWithoutPassword {
-  id: number;
-  name: string;
-  email: string;
+  UserID: string;
+  Role: UserRole;
+  UserName: string;
+  UserSurname: string;
+  Email: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

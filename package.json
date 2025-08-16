@@ -24,7 +24,8 @@
     "seed:mathematics-topics": "nest start --entryFile src/scripts/seed-mathematics-topics",
     "seed:physics-topics": "nest start --entryFile src/scripts/seed-physics-topics",
     "seed:chemistry-topics": "nest start --entryFile src/scripts/seed-chemistry-topics",
-    "seed:biology-topics": "nest start --entryFile src/scripts/seed-biology-topics"
+    "seed:biology-topics": "nest start --entryFile src/scripts/seed-biology-topics",
+    "seed:meta-tags": "nest start --entryFile src/scripts/seed-meta-tags"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

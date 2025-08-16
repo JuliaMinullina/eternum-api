@@ -13,12 +13,15 @@ export class DisciplineService {
   ) {}
 
   async findAll(): Promise<Discipline[]> {
-    return this.disciplineRepository.find();
+    return this.disciplineRepository.find({
+      relations: ['disciplineMetaTags', 'disciplineMetaTags.metaTag'],
+    });
   }
 
   async findOne(id: string): Promise<Discipline> {
     const discipline = await this.disciplineRepository.findOne({
       where: { DisciplineID: id },
+      relations: ['disciplineMetaTags', 'disciplineMetaTags.metaTag'],
     });
     if (!discipline) {
       throw new NotFoundException(`Discipline with ID ${id} not found`);
@@ -40,5 +43,14 @@ export class DisciplineService {
   async remove(id: string): Promise<void> {
     const discipline = await this.findOne(id);
     await this.disciplineRepository.remove(discipline);
+  }
+
+  async findByMetaTag(metaTagCode: string): Promise<Discipline[]> {
+    return this.disciplineRepository
+      .createQueryBuilder('discipline')
+      .leftJoinAndSelect('discipline.disciplineMetaTags', 'disciplineMetaTag')
+      .leftJoinAndSelect('disciplineMetaTag.metaTag', 'metaTag')
+      .where('metaTag.MetaTagCode = :metaTagCode', { metaTagCode })
+      .getMany();
   }
 }

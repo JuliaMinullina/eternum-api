@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест API Мета-тегов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .meta-tag {
+            background: #e3f2fd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #2196f3;
+        }
+        .discipline {
+            background: #f3e5f5;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #9c27b0;
+        }
+        .meta-tag-code {
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .discipline-name {
+            font-weight: bold;
+            color: #7b1fa2;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        .error {
+            color: #f44336;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #4caf50;
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Тест API Мета-тегов</h1>
+        <p>Этот файл тестирует API для работы с мета-тегами дисциплин.</p>
+        
+        <button onclick="loadMetaTags()">Загрузить все мета-теги</button>
+        <button onclick="loadDisciplines()">Загрузить дисциплины с мета-тегами</button>
+        <button onclick="clearResults()">Очистить результаты</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        
+        async function loadMetaTags() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="success">Загружаю мета-теги...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/meta-tags`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<h2>📋 Все мета-теги</h2>';
+                    data.data.forEach(metaTag => {
+                        html += `
+                            <div class="meta-tag">
+                                <div class="meta-tag-code">${metaTag.MetaTagCode}</div>
+                                <div>${metaTag.MetaTagName}</div>
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Ошибка: ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Ошибка подключения: ${error.message}</div>`;
+            }
+        }
+        
+        async function loadDisciplines() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="success">Загружаю дисциплины...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/disciplines`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<h2>📚 Дисциплины с мета-тегами</h2>';
+                    data.data.forEach(discipline => {
+                        html += `
+                            <div class="discipline">
+                                <div class="discipline-name">${discipline.DisciplineName}</div>
+                                <div>ID: ${discipline.DisciplineID}</div>
+                                ${discipline.disciplineMetaTags && discipline.disciplineMetaTags.length > 0 ? 
+                                    `<div>Мета-теги: ${discipline.disciplineMetaTags.map(dmt => dmt.metaTag.MetaTagName).join(', ')}</div>` : 
+                                    '<div>Мета-теги: не назначены</div>'
+                                }
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Ошибка: ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Ошибка подключения: ${error.message}</div>`;
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // Автоматически загружаем мета-теги при загрузке страницы
+        window.onload = function() {
+            loadMetaTags();
+        };
+    </script>
+</body>
+</html>

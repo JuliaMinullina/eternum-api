@@ -9,12 +9,16 @@ import { DisciplineModule } from './modules/discipline/discipline.module';
 import { TopicModule } from './modules/topic/topic.module';
 import { LessonModule } from './modules/lesson/lesson.module';
 import { ViewHistoryModule } from './modules/view-history/view-history.module';
+import { MetaTagModule } from './modules/meta-tag/meta-tag.module';
+import { DisciplineMetaTagModule } from './modules/discipline-meta-tag/discipline-meta-tag.module';
 import { CorsMiddleware } from './common/middleware/cors.middleware';
 import { User } from './modules/user/user.entity';
 import { Discipline } from './modules/discipline/discipline.entity';
 import { Topic } from './modules/topic/topic.entity';
 import { Lesson } from './modules/lesson/lesson.entity';
 import { ViewHistory } from './modules/view-history/view-history.entity';
+import { MetaTag } from './modules/meta-tag/meta-tag.entity';
+import { DisciplineMetaTag } from './entities/discipline-meta-tag.entity';
 
 @Module({
   imports: [
@@ -28,7 +32,7 @@ import { ViewHistory } from './modules/view-history/view-history.entity';
       username: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || 'password',
       database: process.env.DB_NAME || 'eternum_db',
-      entities: [User, Discipline, Topic, Lesson, ViewHistory],
+      entities: [User, Discipline, Topic, Lesson, ViewHistory, MetaTag, DisciplineMetaTag],
       synchronize: true,
     }),
     UserModule,
@@ -37,6 +41,8 @@ import { ViewHistory } from './modules/view-history/view-history.entity';
     TopicModule,
     LessonModule,
     ViewHistoryModule,
+    MetaTagModule,
+    DisciplineMetaTagModule,
   ],
   controllers: [AppController],
   providers: [AppService],

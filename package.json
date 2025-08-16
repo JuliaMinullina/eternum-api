@@ -19,7 +19,12 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:disciplines": "nest start --entryFile src/scripts/seed-disciplines",
-    "seed:russian-topics": "nest start --entryFile src/scripts/seed-russian-topics"
+    "seed:russian-topics": "nest start --entryFile src/scripts/seed-russian-topics",
+    "seed:literature-topics": "nest start --entryFile src/scripts/seed-literature-topics",
+    "seed:mathematics-topics": "nest start --entryFile src/scripts/seed-mathematics-topics",
+    "seed:physics-topics": "nest start --entryFile src/scripts/seed-physics-topics",
+    "seed:chemistry-topics": "nest start --entryFile src/scripts/seed-chemistry-topics",
+    "seed:biology-topics": "nest start --entryFile src/scripts/seed-biology-topics"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

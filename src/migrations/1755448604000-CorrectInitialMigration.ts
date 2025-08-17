@@ -167,6 +167,16 @@ export class CorrectInitialMigration1755448604000 implements MigrationInterface 
             ADD CONSTRAINT "FK_view_history_lesson" 
             FOREIGN KEY ("LessonID") REFERENCES "lessons"("LessonID") ON DELETE CASCADE
         `);
+
+        // Пересоздаем таблицу migrations для TypeORM
+        await queryRunner.query(`
+            CREATE TABLE "migrations" (
+                "id" SERIAL NOT NULL,
+                "timestamp" bigint NOT NULL,
+                "name" character varying NOT NULL,
+                CONSTRAINT "PK_8c82d7f526340ab734260ea46be" PRIMARY KEY ("id")
+            )
+        `);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

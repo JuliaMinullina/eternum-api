@@ -12,6 +12,24 @@ export class ViewHistoryService {
   ) {}
 
   async create(createViewHistoryDto: CreateViewHistoryDto, userId: string): Promise<ViewHistory> {
+    // Проверяем, есть ли уже запись для этого пользователя и контента
+    const existingView = await this.viewHistoryRepository.findOne({
+      where: {
+        UserID: userId,
+        ViewType: createViewHistoryDto.ViewType,
+        DisciplineID: createViewHistoryDto.DisciplineID,
+        TopicID: createViewHistoryDto.TopicID,
+        LessonID: createViewHistoryDto.LessonID,
+      },
+    });
+
+    if (existingView) {
+      // Обновляем время просмотра существующей записи
+      existingView.ViewedAt = new Date();
+      return this.viewHistoryRepository.save(existingView);
+    }
+
+    // Создаем новую запись
     const viewHistory = this.viewHistoryRepository.create({
       ...createViewHistoryDto,
       UserID: userId,
@@ -38,6 +56,7 @@ export class ViewHistoryService {
       where: { UserID: userId },
       order: { ViewedAt: 'DESC' },
       take: limit,
+      relations: ['discipline', 'topic', 'lesson'],
     });
   }
 

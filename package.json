@@ -25,7 +25,9 @@
     "seed:physics-topics": "nest start --entryFile src/scripts/seed-physics-topics",
     "seed:chemistry-topics": "nest start --entryFile src/scripts/seed-chemistry-topics",
     "seed:biology-topics": "nest start --entryFile src/scripts/seed-biology-topics",
-    "seed:meta-tags": "nest start --entryFile src/scripts/seed-meta-tags"
+    "seed:meta-tags": "nest start --entryFile src/scripts/seed-meta-tags",
+    "cleanup:tokens": "nest start --entryFile src/scripts/cleanup-expired-tokens",
+    "check:deployment": "node scripts/check-deployment.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -36,9 +38,12 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/cookie-parser": "^1.4.9",
+    "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "cookie-parser": "^1.4.7",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",

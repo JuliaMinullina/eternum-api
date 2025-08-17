@@ -11,7 +11,6 @@ import { LessonModule } from './modules/lesson/lesson.module';
 import { ViewHistoryModule } from './modules/view-history/view-history.module';
 import { MetaTagModule } from './modules/meta-tag/meta-tag.module';
 import { DisciplineMetaTagModule } from './modules/discipline-meta-tag/discipline-meta-tag.module';
-import { CorsMiddleware } from './common/middleware/cors.middleware';
 import { User } from './modules/user/user.entity';
 import { Discipline } from './modules/discipline/discipline.entity';
 import { Topic } from './modules/topic/topic.entity';
@@ -19,6 +18,8 @@ import { Lesson } from './modules/lesson/lesson.entity';
 import { ViewHistory } from './modules/view-history/view-history.entity';
 import { MetaTag } from './modules/meta-tag/meta-tag.entity';
 import { DisciplineMetaTag } from './entities/discipline-meta-tag.entity';
+import { RefreshToken } from './modules/auth/refresh-token.entity';
+import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.middleware';
 
 @Module({
   imports: [
@@ -32,7 +33,7 @@ import { DisciplineMetaTag } from './entities/discipline-meta-tag.entity';
       username: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || 'password',
       database: process.env.DB_NAME || 'eternum_db',
-      entities: [User, Discipline, Topic, Lesson, ViewHistory, MetaTag, DisciplineMetaTag],
+      entities: [User, Discipline, Topic, Lesson, ViewHistory, MetaTag, DisciplineMetaTag, RefreshToken],
       synchronize: true,
     }),
     UserModule,
@@ -49,6 +50,6 @@ import { DisciplineMetaTag } from './entities/discipline-meta-tag.entity';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CorsMiddleware).forRoutes('*');
+    consumer.apply(CookieAuthMiddleware).forRoutes('*');
   }
 }

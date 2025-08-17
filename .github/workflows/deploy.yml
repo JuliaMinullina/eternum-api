@@ -1,0 +1,40 @@
+name: Deploy to CapRover
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run tests
+      run: npm test
+
+    - name: Build application
+      run: npm run build
+
+    - name: Deploy to CapRover
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      run: |
+        curl -X POST \
+          -H "Content-Type: application/json" \
+          -d '{"gitHub": {"user": "${{ github.repository_owner }}", "repo": "${{ github.event.repository.name }}", "branch": "${{ github.ref_name }}"}}' \
+          ${{ secrets.CAPROVER_WEBHOOK_URL }}
+      env:
+        CAPROVER_WEBHOOK_URL: ${{ secrets.CAPROVER_WEBHOOK_URL }}

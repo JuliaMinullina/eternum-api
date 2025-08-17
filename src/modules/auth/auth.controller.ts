@@ -1,7 +1,9 @@
-import { Controller, Post, Body, Get, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, Response, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { LogoutDto } from './dto/logout.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { UserService } from '../user/user.service';
@@ -33,6 +35,8 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
+    console.log('🔐 Login attempt for:', loginDto.email);
+    
     const user = await this.authService.validateUser(loginDto.email, loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -42,18 +46,14 @@ export class AuthController {
       throw new UnauthorizedException('Account is deactivated');
     }
 
-    return this.authService.login(user);
+    const result = await this.authService.login(user);
+    console.log('🔐 Login successful, returning result');
+    return result;
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('refresh')
-  async refreshToken(@Request() req) {
-    const user = await this.userService.findOne(req.user.UserID);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return this.authService.login(user);
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshAccessToken(refreshTokenDto.refresh_token);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -68,11 +68,31 @@ export class AuthController {
     return { valid: true, user: req.user };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Get('test-cookies')
+  async testCookies(@Request() req, @Response() res) {
+    console.log('🍪 Testing cookies endpoint');
+    console.log('Request cookies:', req.cookies);
+    
+    // Устанавливаем тестовую cookie
+    res.cookie('test_cookie', 'test_value', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 60 * 1000, // 1 минута
+      path: '/'
+    });
+    
+    return { message: 'Test cookie set', cookies: req.cookies };
+  }
+
   @Post('logout')
-  async logout() {
-    // В JWT аутентификации logout обычно обрабатывается на клиенте
-    // путем удаления токена
-    return { message: 'Logged out successfully' };
+  async logout(@Body() logoutDto: LogoutDto, @Request() req, @Response() res) {
+    const result = await this.authService.logout(logoutDto.refresh_token);
+    
+    // Очищаем cookies
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
+    
+    return result;
   }
 }

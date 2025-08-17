@@ -22,6 +22,50 @@ export class ViewHistoryController {
     return this.viewHistoryService.create(createViewHistoryDto, req.user.UserID);
   }
 
+  @Post('topic/:topicId')
+  async recordTopicView(
+    @Request() req,
+    @Param('topicId') topicId: string,
+    @Body() body: { disciplineId: string },
+  ): Promise<ViewHistory> {
+    const createViewHistoryDto: CreateViewHistoryDto = {
+      ViewType: ViewType.TOPIC,
+      DisciplineID: body.disciplineId,
+      TopicID: topicId,
+      LessonID: undefined,
+    };
+    return this.viewHistoryService.create(createViewHistoryDto, req.user.UserID);
+  }
+
+  @Post('discipline/:disciplineId')
+  async recordDisciplineView(
+    @Request() req,
+    @Param('disciplineId') disciplineId: string,
+  ): Promise<ViewHistory> {
+    const createViewHistoryDto: CreateViewHistoryDto = {
+      ViewType: ViewType.DISCIPLINE,
+      DisciplineID: disciplineId,
+      TopicID: undefined,
+      LessonID: undefined,
+    };
+    return this.viewHistoryService.create(createViewHistoryDto, req.user.UserID);
+  }
+
+  @Post('lesson/:lessonId')
+  async recordLessonView(
+    @Request() req,
+    @Param('lessonId') lessonId: string,
+    @Body() body: { disciplineId: string; topicId: string },
+  ): Promise<ViewHistory> {
+    const createViewHistoryDto: CreateViewHistoryDto = {
+      ViewType: ViewType.LESSON,
+      DisciplineID: body.disciplineId,
+      TopicID: body.topicId,
+      LessonID: lessonId,
+    };
+    return this.viewHistoryService.create(createViewHistoryDto, req.user.UserID);
+  }
+
   @Get('recent')
   async getRecentViews(
     @Request() req,

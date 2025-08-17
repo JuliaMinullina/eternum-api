@@ -23,6 +23,7 @@
     "migration:run": "npm run typeorm migration:run -- -d src/config/typeorm.config.ts",
     "migration:revert": "npm run typeorm migration:revert -- -d src/config/typeorm.config.ts",
     "migration:create": "node scripts/generate-migration.js",
+    "db:reset": "node scripts/reset-database.js",
     "seed:disciplines": "nest start --entryFile src/scripts/seed-disciplines",
     "seed:russian-topics": "nest start --entryFile src/scripts/seed-russian-topics",
     "seed:literature-topics": "nest start --entryFile src/scripts/seed-literature-topics",

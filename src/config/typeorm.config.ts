@@ -15,7 +15,7 @@ export default new DataSource({
     __dirname + '/../entities/*.entity{.ts,.js}'
   ],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-  synchronize: false, // Отключаем для безопасности
+  synchronize: false, // Всегда отключаем синхронизацию
   logging: configService.get('NODE_ENV') !== 'production',
   ssl: configService.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
 });

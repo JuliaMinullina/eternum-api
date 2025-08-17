@@ -13,8 +13,8 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
     __dirname + '/../entities/*.entity{.ts,.js}'
   ],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-  migrationsRun: configService.get('NODE_ENV') === 'production', // Автоматически запускать миграции в production
-  synchronize: configService.get('NODE_ENV') !== 'production', // Автоматическая синхронизация схемы (только для разработки)
+  migrationsRun: true, // Всегда запускать миграции
+  synchronize: false, // Отключаем синхронизацию для безопасности
   logging: configService.get('NODE_ENV') !== 'production',
   ssl: configService.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
   // Дополнительные настройки для Docker

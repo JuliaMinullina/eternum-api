@@ -1,9 +1,15 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InitialMigration1700000000000 implements MigrationInterface {
-    name = 'InitialMigration1700000000000'
+export class CorrectInitialMigration1755448604000 implements MigrationInterface {
+    name = 'CorrectInitialMigration1755448604000'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        // ПОЛНЫЙ СБРОС - удаляем все таблицы и типы
+        await queryRunner.query(`DROP SCHEMA public CASCADE`);
+        await queryRunner.query(`CREATE SCHEMA public`);
+        await queryRunner.query(`GRANT ALL ON SCHEMA public TO postgres`);
+        await queryRunner.query(`GRANT ALL ON SCHEMA public TO public`);
+
         // Установка расширения uuid
         await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
@@ -165,27 +171,23 @@ export class InitialMigration1700000000000 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Удаление внешних ключей
-        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_lesson"`);
-        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_topic"`);
-        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_discipline"`);
-        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_user"`);
-        await queryRunner.query(`ALTER TABLE "lessons" DROP CONSTRAINT "FK_lessons_topic"`);
-        await queryRunner.query(`ALTER TABLE "topics" DROP CONSTRAINT "FK_topics_discipline"`);
-        await queryRunner.query(`ALTER TABLE "discipline_meta_tags" DROP CONSTRAINT "FK_discipline_meta_tags_meta_tag"`);
-        await queryRunner.query(`ALTER TABLE "discipline_meta_tags" DROP CONSTRAINT "FK_discipline_meta_tags_discipline"`);
+        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT IF EXISTS "FK_view_history_lesson"`);
+        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT IF EXISTS "FK_view_history_topic"`);
+        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT IF EXISTS "FK_view_history_discipline"`);
+        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT IF EXISTS "FK_view_history_user"`);
+        await queryRunner.query(`ALTER TABLE "lessons" DROP CONSTRAINT IF EXISTS "FK_lessons_topic"`);
+        await queryRunner.query(`ALTER TABLE "topics" DROP CONSTRAINT IF EXISTS "FK_topics_discipline"`);
+        await queryRunner.query(`ALTER TABLE "discipline_meta_tags" DROP CONSTRAINT IF EXISTS "FK_discipline_meta_tags_meta_tag"`);
+        await queryRunner.query(`ALTER TABLE "discipline_meta_tags" DROP CONSTRAINT IF EXISTS "FK_discipline_meta_tags_discipline"`);
 
         // Удаление таблиц
-        await queryRunner.query(`DROP TABLE "refresh_tokens"`);
-        await queryRunner.query(`DROP TABLE "view_history"`);
-        await queryRunner.query(`DROP TABLE "lessons"`);
-        await queryRunner.query(`DROP TABLE "topics"`);
-        await queryRunner.query(`DROP TABLE "discipline_meta_tags"`);
-        await queryRunner.query(`DROP TABLE "meta_tags"`);
-        await queryRunner.query(`DROP TABLE "disciplines"`);
-        await queryRunner.query(`DROP TABLE "users"`);
-
-        // Удаление enum типов
-        await queryRunner.query(`DROP TYPE "view_type_enum"`);
-        await queryRunner.query(`DROP TYPE "user_role_enum"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "refresh_tokens"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "view_history"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "lessons"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "topics"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "discipline_meta_tags"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "meta_tags"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "disciplines"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "users"`);
     }
 }

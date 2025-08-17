@@ -34,7 +34,9 @@ import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.midd
       password: process.env.DB_PASSWORD || 'password',
       database: process.env.DB_NAME || 'eternum_db',
       entities: [User, Discipline, Topic, Lesson, ViewHistory, MetaTag, DisciplineMetaTag, RefreshToken],
-      synchronize: true,
+      migrations: [__dirname + '/migrations/*{.ts,.js}'],
+      migrationsRun: true,
+      synchronize: false,
     }),
     UserModule,
     AuthModule,
@@ -50,6 +52,6 @@ import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.midd
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CookieAuthMiddleware).forRoutes('*');
+    consumer.apply(CookieAuthMiddleware).forRoutes(':path*');
   }
 }

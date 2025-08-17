@@ -31,20 +31,20 @@ RUN npm ci --only=production
 # Копируем собранное приложение из builder stage
 COPY --from=builder /app/dist ./dist
 
+# Копируем скрипт запуска
+COPY start.sh /app/start.sh
+
 # Создаем пользователя для безопасности
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nestjs -u 1001
 
-# Меняем владельца файлов
+# Меняем владельца файлов и права
 RUN chown -R nestjs:nodejs /app
+RUN chmod +x /app/start.sh
 USER nestjs
 
 # Открываем порт
 EXPOSE 3000
-
-# Копируем скрипт запуска
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
 
 # Запускаем приложение
 CMD ["/app/start.sh"]

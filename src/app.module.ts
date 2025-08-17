@@ -50,8 +50,8 @@ import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.midd
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CookieAuthMiddleware).forRoutes(':path*');
-  }
+export class AppModule {
+  // configure(consumer: MiddlewareConsumer) {
+  //   consumer.apply(CookieAuthMiddleware).forRoutes('*');
+  // }
 }

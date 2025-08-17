@@ -29,8 +29,8 @@ import { AuthCookiesMiddleware } from './middleware/auth-cookies.middleware';
   providers: [AuthService, JwtStrategy, LocalStrategy],
   exports: [AuthService],
 })
-export class AuthModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthCookiesMiddleware).forRoutes('auth/:path*');
-  }
+export class AuthModule {
+  // configure(consumer: MiddlewareConsumer) {
+  //   consumer.apply(AuthCookiesMiddleware).forRoutes('auth/*');
+  // }
 }

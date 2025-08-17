@@ -1,5 +1,5 @@
-# Используем официальный Node.js образ
-FROM node:20-alpine
+# Multi-stage build для оптимизации размера образа
+FROM node:20-alpine AS builder
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
@@ -7,7 +7,7 @@ WORKDIR /app
 # Копируем файлы package.json и package-lock.json
 COPY package*.json ./
 
-# Устанавливаем все зависимости (включая devDependencies для сборки)
+# Устанавливаем все зависимости
 RUN npm ci
 
 # Копируем исходный код
@@ -16,8 +16,20 @@ COPY . .
 # Собираем приложение
 RUN npm run build
 
-# Удаляем devDependencies для уменьшения размера образа
-RUN npm prune --production
+# Production stage
+FROM node:20-alpine AS production
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Копируем package.json и package-lock.json
+COPY package*.json ./
+
+# Устанавливаем только production зависимости
+RUN npm ci --only=production
+
+# Копируем собранное приложение из builder stage
+COPY --from=builder /app/dist ./dist
 
 # Создаем пользователя для безопасности
 RUN addgroup -g 1001 -S nodejs

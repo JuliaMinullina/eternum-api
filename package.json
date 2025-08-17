@@ -27,7 +27,8 @@
     "seed:biology-topics": "nest start --entryFile src/scripts/seed-biology-topics",
     "seed:meta-tags": "nest start --entryFile src/scripts/seed-meta-tags",
     "cleanup:tokens": "nest start --entryFile src/scripts/cleanup-expired-tokens",
-    "check:deployment": "node scripts/check-deployment.js"
+    "check:deployment": "node scripts/check-deployment.js",
+    "fix:deployment": "node scripts/fix-deployment.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -76,6 +77,10 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   },
   "jest": {
     "moduleFileExtensions": [

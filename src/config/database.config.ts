@@ -8,7 +8,12 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
   username: configService.get('DB_USERNAME', 'postgres'),
   password: configService.get('DB_PASSWORD', 'password'),
   database: configService.get('DB_NAME', 'nestjs_db'),
-  entities: [__dirname + '/../modules/**/*.entity{.ts,.js}'],
+  entities: [
+    __dirname + '/../modules/**/*.entity{.ts,.js}',
+    __dirname + '/../entities/*.entity{.ts,.js}'
+  ],
+  migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+  migrationsRun: configService.get('NODE_ENV') === 'production', // Автоматически запускать миграции в production
   synchronize: configService.get('NODE_ENV') !== 'production', // Автоматическая синхронизация схемы (только для разработки)
   logging: configService.get('NODE_ENV') !== 'production',
   ssl: configService.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,

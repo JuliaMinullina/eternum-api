@@ -42,5 +42,14 @@ USER nestjs
 # Открываем порт
 EXPOSE 3000
 
+# Создаем скрипт для запуска миграций и приложения
+RUN echo '#!/bin/sh\n\
+if [ "$NODE_ENV" = "production" ]; then\n\
+  echo "Running migrations..."\n\
+  npm run migration:run\n\
+fi\n\
+echo "Starting application..."\n\
+exec npm run start:prod' > /app/start.sh && chmod +x /app/start.sh
+
 # Запускаем приложение
-CMD ["npm", "run", "start:prod"]
+CMD ["/app/start.sh"]

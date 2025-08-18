@@ -7,11 +7,35 @@ export class InitialMigration1700000000000 implements MigrationInterface {
         // Установка расширения uuid
         await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
-        // Создание enum для ролей пользователей
-        await queryRunner.query(`CREATE TYPE "user_role_enum" AS ENUM('admin', 'user')`);
+        // Создание enum для ролей пользователей (идемпотентно)
+        await queryRunner.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE n.nspname = 'public' AND t.typname = 'user_role_enum'
+                ) THEN
+                    CREATE TYPE "user_role_enum" AS ENUM('admin', 'user');
+                END IF;
+            END $$;
+        `);
 
-        // Создание enum для типов просмотров
-        await queryRunner.query(`CREATE TYPE "view_type_enum" AS ENUM('discipline', 'topic', 'lesson')`);
+        // Создание enum для типов просмотров (идемпотентно)
+        await queryRunner.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE n.nspname = 'public' AND t.typname = 'view_type_enum'
+                ) THEN
+                    CREATE TYPE "view_type_enum" AS ENUM('discipline', 'topic', 'lesson');
+                END IF;
+            END $$;
+        `);
 
         // Создание таблицы пользователей
         await queryRunner.query(`
@@ -184,8 +208,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "disciplines"`);
         await queryRunner.query(`DROP TABLE "users"`);
 
-        // Удаление enum типов
-        await queryRunner.query(`DROP TYPE "view_type_enum"`);
-        await queryRunner.query(`DROP TYPE "user_role_enum"`);
+        // Удаление enum типов (без ошибок, если уже удалены)
+        await queryRunner.query(`DROP TYPE IF EXISTS "view_type_enum"`);
+        await queryRunner.query(`DROP TYPE IF EXISTS "user_role_enum"`);
     }
 }

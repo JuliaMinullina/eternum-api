@@ -4,7 +4,12 @@ export class CorrectInitialMigration1755448604000 implements MigrationInterface 
     name = 'CorrectInitialMigration1755448604000'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        // ПОЛНЫЙ СБРОС - удаляем все таблицы и типы
+        // В продакшене пропускаем этот сброс схемы, если явно не разрешено
+        if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SCHEMA_RESET !== 'true') {
+            return; // НИЧЕГО НЕ ДЕЛАЕМ В PROD, ЧТОБЫ НЕ СНЕСТИ БАЗУ
+        }
+
+        // ПОЛНЫЙ СБРОС - удаляем все таблицы и типы (использовать только при ALLOW_SCHEMA_RESET=true)
         await queryRunner.query(`DROP SCHEMA public CASCADE`);
         await queryRunner.query(`CREATE SCHEMA public`);
         await queryRunner.query(`GRANT ALL ON SCHEMA public TO postgres`);
@@ -13,11 +18,35 @@ export class CorrectInitialMigration1755448604000 implements MigrationInterface 
         // Установка расширения uuid
         await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
-        // Создание enum для ролей пользователей
-        await queryRunner.query(`CREATE TYPE "user_role_enum" AS ENUM('admin', 'user')`);
+        // Создание enum для ролей пользователей (идемпотентно)
+        await queryRunner.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE n.nspname = 'public' AND t.typname = 'user_role_enum'
+                ) THEN
+                    CREATE TYPE "user_role_enum" AS ENUM('admin', 'user');
+                END IF;
+            END $$;
+        `);
 
-        // Создание enum для типов просмотров
-        await queryRunner.query(`CREATE TYPE "view_type_enum" AS ENUM('discipline', 'topic', 'lesson')`);
+        // Создание enum для типов просмотров (идемпотентно)
+        await queryRunner.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE n.nspname = 'public' AND t.typname = 'view_type_enum'
+                ) THEN
+                    CREATE TYPE "view_type_enum" AS ENUM('discipline', 'topic', 'lesson');
+                END IF;
+            END $$;
+        `);
 
         // Создание таблицы пользователей
         await queryRunner.query(`

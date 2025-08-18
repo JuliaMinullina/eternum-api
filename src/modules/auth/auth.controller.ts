@@ -51,16 +51,16 @@ export class AuthController {
     // Устанавливаем httpOnly cookies для доступа через прокси
     res.cookie('access_token', result.access_token, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: (result.expires_in || 24 * 60 * 60) * 1000,
       path: '/',
     });
     if (result.refresh_token) {
       res.cookie('refresh_token', result.refresh_token, {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 72 * 60 * 60 * 1000,
         path: '/',
       });
@@ -73,8 +73,8 @@ export class AuthController {
     const result = await this.authService.refreshAccessToken(refreshTokenDto.refresh_token);
     res.cookie('access_token', result.access_token, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: (result.expires_in || 24 * 60 * 60) * 1000,
       path: '/',
     });

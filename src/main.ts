@@ -11,13 +11,9 @@ async function bootstrap() {
   // Подключаем cookie-parser
   app.use(cookieParser());
   
-  // Настройка CORS
-  const corsOrigins = process.env.CORS_ORIGIN 
-    ? process.env.CORS_ORIGIN.split(',') 
-    : ['http://localhost:5173', 'http://localhost:5176', 'http://localhost:5174', 'http://localhost:3000'];
-    
+  // Настройка CORS: разрешить все домены (отражаем Origin) с поддержкой credentials
   app.enableCors({
-    origin: corsOrigins,
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,

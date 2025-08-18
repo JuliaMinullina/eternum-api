@@ -7,6 +7,15 @@ export class InitialMigration1700000000000 implements MigrationInterface {
         // Установка расширения uuid
         await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
+        // Если база уже инициализирована (есть таблица users), выходим
+        const usersTableExists = await queryRunner.query(`
+            SELECT 1 FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_name = 'users'
+        `);
+        if (Array.isArray(usersTableExists) && usersTableExists.length > 0) {
+            return; // Схема уже развёрнута – пропускаем миграцию
+        }
+
         // Создание enum для ролей пользователей (идемпотентно)
         await queryRunner.query(`
             DO $$

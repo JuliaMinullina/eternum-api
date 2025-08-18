@@ -30,7 +30,7 @@ import { AuthCookiesMiddleware } from './middleware/auth-cookies.middleware';
   exports: [AuthService],
 })
 export class AuthModule {
-  // configure(consumer: MiddlewareConsumer) {
-  //   consumer.apply(AuthCookiesMiddleware).forRoutes('auth/*');
-  // }
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuthCookiesMiddleware).forRoutes('auth/*');
+  }
 }

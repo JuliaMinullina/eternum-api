@@ -6,6 +6,9 @@ export class MetaTag {
   @PrimaryColumn({ type: 'varchar', length: 50 })
   MetaTagCode: string;
 
+  @Column({ unique: true })
+  ID: number;
+
   @Column({ type: 'varchar', length: 100, nullable: false })
   MetaTagName: string;
 

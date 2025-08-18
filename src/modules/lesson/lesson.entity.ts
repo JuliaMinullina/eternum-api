@@ -5,6 +5,9 @@ export class Lesson {
   @PrimaryGeneratedColumn('uuid')
   LessonID: string;
 
+  @Column({ unique: true })
+  ID: number;
+
   @Column({ length: 255 })
   LessonName: string;
 

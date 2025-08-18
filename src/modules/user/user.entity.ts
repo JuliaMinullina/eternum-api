@@ -10,6 +10,9 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   UserID: string;
 
+  @Column({ unique: true })
+  ID: number;
+
   @Column({
     type: 'enum',
     enum: UserRole,

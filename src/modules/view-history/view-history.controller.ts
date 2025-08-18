@@ -5,16 +5,17 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ViewHistory, ViewType } from './view-history.entity';
 
 @Controller('view-history')
-@UseGuards(JwtAuthGuard)
 export class ViewHistoryController {
   constructor(private readonly viewHistoryService: ViewHistoryService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async findByUser(@Request() req): Promise<ViewHistory[]> {
     return this.viewHistoryService.findByUser(req.user.UserID);
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(
     @Request() req,
     @Body() createViewHistoryDto: CreateViewHistoryDto,
@@ -23,6 +24,7 @@ export class ViewHistoryController {
   }
 
   @Post('topic/:topicId')
+  @UseGuards(JwtAuthGuard)
   async recordTopicView(
     @Request() req,
     @Param('topicId') topicId: string,
@@ -38,6 +40,7 @@ export class ViewHistoryController {
   }
 
   @Post('discipline/:disciplineId')
+  @UseGuards(JwtAuthGuard)
   async recordDisciplineView(
     @Request() req,
     @Param('disciplineId') disciplineId: string,
@@ -52,6 +55,7 @@ export class ViewHistoryController {
   }
 
   @Post('lesson/:lessonId')
+  @UseGuards(JwtAuthGuard)
   async recordLessonView(
     @Request() req,
     @Param('lessonId') lessonId: string,
@@ -67,6 +71,7 @@ export class ViewHistoryController {
   }
 
   @Get('recent')
+  @UseGuards(JwtAuthGuard)
   async getRecentViews(
     @Request() req,
     @Query('limit') limit: number = 10,
@@ -75,6 +80,7 @@ export class ViewHistoryController {
   }
 
   @Get('type/:viewType')
+  @UseGuards(JwtAuthGuard)
   async findByUserAndType(
     @Request() req,
     @Param('viewType') viewType: ViewType,
@@ -83,11 +89,13 @@ export class ViewHistoryController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async remove(@Request() req, @Param('id') id: string): Promise<void> {
     return this.viewHistoryService.remove(id, req.user.UserID);
   }
 
   @Delete('my/clear')
+  @UseGuards(JwtAuthGuard)
   async clearUserHistory(@Request() req): Promise<void> {
     return this.viewHistoryService.clearUserHistory(req.user.UserID);
   }

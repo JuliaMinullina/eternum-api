@@ -51,7 +51,7 @@ import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.midd
   providers: [AppService],
 })
 export class AppModule {
-  // configure(consumer: MiddlewareConsumer) {
-  //   consumer.apply(CookieAuthMiddleware).forRoutes('*');
-  // }
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CookieAuthMiddleware).forRoutes('*');
+  }
 }

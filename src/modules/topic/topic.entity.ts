@@ -5,6 +5,9 @@ export class Topic {
   @PrimaryGeneratedColumn('uuid')
   TopicID: string;
 
+  @Column({ unique: true })
+  ID: number;
+
   @Column({ length: 255 })
   TopicName: string;
 

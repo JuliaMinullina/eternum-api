@@ -6,6 +6,9 @@ export class Discipline {
   @PrimaryGeneratedColumn('uuid')
   DisciplineID: string;
 
+  @Column({ unique: true })
+  ID: number;
+
   @Column({ length: 255 })
   DisciplineName: string;
 

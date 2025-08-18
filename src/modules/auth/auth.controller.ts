@@ -34,7 +34,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto, @Response() res) {
     console.log('🔐 Login attempt for:', loginDto.email);
     
     const user = await this.authService.validateUser(loginDto.email, loginDto.password);
@@ -47,13 +47,38 @@ export class AuthController {
     }
 
     const result = await this.authService.login(user);
-    console.log('🔐 Login successful, returning result');
-    return result;
+    console.log('🔐 Login successful, setting cookies and returning result');
+    // Устанавливаем httpOnly cookies для доступа через прокси
+    res.cookie('access_token', result.access_token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: (result.expires_in || 24 * 60 * 60) * 1000,
+      path: '/',
+    });
+    if (result.refresh_token) {
+      res.cookie('refresh_token', result.refresh_token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 72 * 60 * 60 * 1000,
+        path: '/',
+      });
+    }
+    return res.json(result);
   }
 
   @Post('refresh')
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshAccessToken(refreshTokenDto.refresh_token);
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto, @Response() res) {
+    const result = await this.authService.refreshAccessToken(refreshTokenDto.refresh_token);
+    res.cookie('access_token', result.access_token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: (result.expires_in || 24 * 60 * 60) * 1000,
+      path: '/',
+    });
+    return res.json(result);
   }
 
   @UseGuards(JwtAuthGuard)

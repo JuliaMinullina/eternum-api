@@ -6,7 +6,7 @@ export class CorsMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     // Обработка preflight запросов
     if (req.method === 'OPTIONS') {
-      res.header('Access-Control-Allow-Origin', 'http://localhost:5176');
+      res.header('Access-Control-Allow-Origin', req.headers.origin || 'http://localhost:5173');
       res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
       res.header('Access-Control-Allow-Credentials', 'true');
@@ -15,7 +15,7 @@ export class CorsMiddleware implements NestMiddleware {
     }
 
     // Добавляем CORS заголовки для всех запросов
-    res.header('Access-Control-Allow-Origin', 'http://localhost:5176');
+    res.header('Access-Control-Allow-Origin', req.headers.origin || 'http://localhost:5173');
     res.header('Access-Control-Allow-Credentials', 'true');
     
     next();

@@ -11,6 +11,9 @@ export class ViewHistory {
   @PrimaryGeneratedColumn('uuid')
   ViewHistoryID: string;
 
+  @Column({ unique: true })
+  ID: number;
+
   @Column({ type: 'uuid' })
   UserID: string;
 

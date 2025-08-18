@@ -10,6 +10,9 @@ export class DisciplineMetaTag {
   @PrimaryColumn({ type: 'varchar', length: 50 })
   MetaTagCode: string;
 
+  @Column({ unique: true })
+  ID: number;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   CreatedAt: Date;
 

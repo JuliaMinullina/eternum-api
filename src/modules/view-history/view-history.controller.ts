@@ -3,6 +3,9 @@ import { ViewHistoryService } from './view-history.service';
 import { CreateViewHistoryDto } from './dto/create-view-history.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ViewHistory, ViewType } from './view-history.entity';
+import { Topic } from '../topic/topic.entity';
+import { Discipline } from '../discipline/discipline.entity';
+import { MetaTag } from '../meta-tag/meta-tag.entity';
 
 @Controller('view-history')
 export class ViewHistoryController {
@@ -37,6 +40,17 @@ export class ViewHistoryController {
       LessonID: undefined,
     };
     return this.viewHistoryService.create(createViewHistoryDto, req.user.UserID);
+  }
+
+  // Артефакт истории: пользователь нажал «Начать изучение» темы
+  @Post('topic/:topicId/start')
+  @UseGuards(JwtAuthGuard)
+  async recordTopicStart(
+    @Request() req,
+    @Param('topicId') topicId: string,
+  ): Promise<{ ok: true }>{
+    await this.viewHistoryService.recordTopicStart(req.user.UserID, topicId);
+    return { ok: true };
   }
 
   @Post('discipline/:disciplineId')
@@ -77,6 +91,25 @@ export class ViewHistoryController {
     @Query('limit') limit: number = 10,
   ): Promise<ViewHistory[]> {
     return this.viewHistoryService.findRecentByUser(req.user.UserID, limit);
+  }
+
+  // Уникальные списки для пользователя
+  @Get('my/unique/topics')
+  @UseGuards(JwtAuthGuard)
+  async getMyUniqueTopics(@Request() req): Promise<Topic[]> {
+    return this.viewHistoryService.getUniqueVisitedTopics(req.user.UserID);
+  }
+
+  @Get('my/unique/disciplines')
+  @UseGuards(JwtAuthGuard)
+  async getMyUniqueDisciplines(@Request() req): Promise<Discipline[]> {
+    return this.viewHistoryService.getUniqueVisitedDisciplines(req.user.UserID);
+  }
+
+  @Get('my/unique/meta-tags')
+  @UseGuards(JwtAuthGuard)
+  async getMyUniqueMetaTags(@Request() req): Promise<MetaTag[]> {
+    return this.viewHistoryService.getUniqueVisitedMetaTags(req.user.UserID);
   }
 
   @Get('type/:viewType')

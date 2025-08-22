@@ -5,7 +5,8 @@ import { Request, Response, NextFunction } from 'express';
 export class CorsMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const requestOrigin = req.headers.origin as string | undefined;
-    const originToAllow = requestOrigin || '*';
+    const configuredOrigin = process.env.CORS_ORIGIN || 'https://eternum-book.netlify.app';
+    const originToAllow = configuredOrigin;
 
     // Обработка preflight запросов
     if (req.method === 'OPTIONS') {

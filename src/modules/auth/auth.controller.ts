@@ -48,21 +48,30 @@ export class AuthController {
 
     const result = await this.authService.login(user);
     console.log('🔐 Login successful, setting cookies and returning result');
-    // Устанавливаем httpOnly cookies для доступа через прокси
-    res.cookie('access_token', result.access_token, {
+
+    // Явные CORS заголовки для ответов аутентификации
+    const allowedOrigin = process.env.CORS_ORIGIN || 'https://eternum-book.netlify.app';
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
+
+    const cookieDomain = process.env.COOKIE_DOMAIN || process.env.API_COOKIE_DOMAIN;
+    const commonCookieOptions: any = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: (result.expires_in || 24 * 60 * 60) * 1000,
+      secure: true,
+      sameSite: 'none',
       path: '/',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
+    };
+
+    res.cookie('access_token', result.access_token, {
+      ...commonCookieOptions,
+      maxAge: (result.expires_in || 24 * 60 * 60) * 1000,
     });
+
     if (result.refresh_token) {
       res.cookie('refresh_token', result.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        ...commonCookieOptions,
         maxAge: 72 * 60 * 60 * 1000,
-        path: '/',
       });
     }
     return res.json(result);
@@ -71,13 +80,33 @@ export class AuthController {
   @Post('refresh')
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto, @Response() res) {
     const result = await this.authService.refreshAccessToken(refreshTokenDto.refresh_token);
-    res.cookie('access_token', result.access_token, {
+
+    // Явные CORS заголовки для ответов аутентификации
+    const allowedOrigin = process.env.CORS_ORIGIN || 'https://eternum-book.netlify.app';
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Origin', allowedOrigin);
+
+    const cookieDomain = process.env.COOKIE_DOMAIN || process.env.API_COOKIE_DOMAIN;
+    const commonCookieOptions: any = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: (result.expires_in || 24 * 60 * 60) * 1000,
+      secure: true,
+      sameSite: 'none',
       path: '/',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
+    };
+
+    res.cookie('access_token', result.access_token, {
+      ...commonCookieOptions,
+      maxAge: (result.expires_in || 24 * 60 * 60) * 1000,
     });
+
+    // Подтверждаем refresh_token cookie тем же значением, чтобы гарантировать ровно 2 Set-Cookie
+    if (refreshTokenDto.refresh_token) {
+      res.cookie('refresh_token', refreshTokenDto.refresh_token, {
+        ...commonCookieOptions,
+        maxAge: 72 * 60 * 60 * 1000,
+      });
+    }
     return res.json(result);
   }
 

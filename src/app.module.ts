@@ -52,6 +52,6 @@ import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.midd
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(CookieAuthMiddleware).forRoutes('*');
+    // Cookie-based auth removed; rely on Authorization headers only
   }
 }

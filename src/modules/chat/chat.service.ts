@@ -413,6 +413,45 @@ export class ChatService {
     });
   }
 
+  async sendCustomMessage(
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    timeout?: number,
+  ): Promise<string> {
+    const accessToken = await this.ensureAccessToken();
+
+    try {
+      const customTimeout = timeout || 60000; // 60 секунд по умолчанию для формирования трека
+      const response =
+        await this.axiosInstance.post<GigaChatCompletionsResponse>(
+          this.chatUrl,
+          {
+            model: this.model,
+            messages,
+            stream: false,
+          },
+          {
+            headers: {
+              Authorization: `${this.tokenType} ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: customTimeout,
+          },
+        );
+
+      const choice = response.data.choices?.[0];
+      return choice?.message?.content ?? '';
+    } catch (error) {
+      this.logger.error(
+        `Failed to send custom message to GigaChat: ${
+          error?.response?.status ?? error?.message
+        }`,
+      );
+      throw new InternalServerErrorException(
+        'Ошибка при обращении к GigaЧату. Попробуйте ещё раз позже.',
+      );
+    }
+  }
+
   private async ensureAccessToken(): Promise<string> {
     const now = Date.now();
 
@@ -439,6 +478,12 @@ export class ChatService {
         .startsWith('basic ')
         ? authHeader
         : `Basic ${authHeader}`;
+      
+      const rqUID = randomUUID();
+      this.logger.log(
+        `Attempting to refresh GigaChat access token. OAuth URL: ${this.oauthUrl}, Scope: ${this.scope}, RqUID: ${rqUID}`,
+      );
+
       const response = await this.axiosInstance.post<GigaChatTokenResponse>(
         this.oauthUrl,
         `scope=${encodeURIComponent(this.scope)}&grant_type=client_credentials`,
@@ -446,7 +491,7 @@ export class ChatService {
           headers: {
             Authorization: authorizationHeader,
             'Content-Type': 'application/x-www-form-urlencoded',
-            RqUID: randomUUID(),
+            RqUID: rqUID,
           },
         },
       );
@@ -455,6 +500,10 @@ export class ChatService {
         response.data;
 
       if (!access_token) {
+        this.logger.error(
+          'GigaChat response does not contain access_token. Response data:',
+          JSON.stringify(response.data),
+        );
         throw new InternalServerErrorException(
           'GigaЧат не вернул access_token.',
         );
@@ -470,17 +519,41 @@ export class ChatService {
           : Date.now() + 25 * 60 * 1000;
 
       this.tokenExpiresAt = expiresAtMs - this.tokenRefreshBufferMs;
-    } catch (error) {
-      this.logger.error(
-        `Failed to refresh GigaChat access token: ${
-          error?.response?.status ?? error?.code ?? error?.message
-        }`,
+      
+      this.logger.log(
+        `GigaChat access token refreshed successfully. Expires at: ${new Date(expiresAtMs).toISOString()}`,
       );
+    } catch (error: any) {
+      const errorDetails = {
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        code: error?.code,
+        message: error?.message,
+        url: error?.config?.url,
+      };
+
+      this.logger.error(
+        `Failed to refresh GigaChat access token. Details: ${JSON.stringify(errorDetails)}`,
+        error?.stack,
+      );
+
       this.accessToken = null;
       this.tokenExpiresAt = 0;
-      throw new InternalServerErrorException(
-        'Не удалось обновить токен доступа GigaЧата.',
-      );
+
+      // Более информативное сообщение об ошибке
+      let errorMessage = 'Не удалось обновить токен доступа GigaЧата.';
+      if (error?.response?.status === 401) {
+        errorMessage += ' Проверьте правильность GIGACHAT_CLIENT_ID и GIGACHAT_CLIENT_SECRET.';
+      } else if (error?.response?.status === 403) {
+        errorMessage += ' Доступ запрещен. Проверьте права доступа к GigaChat API.';
+      } else if (error?.code === 'ECONNREFUSED' || error?.code === 'ETIMEDOUT') {
+        errorMessage += ' Не удалось подключиться к серверу GigaChat. Проверьте сетевые настройки.';
+      } else if (error?.response?.data) {
+        errorMessage += ` Ответ сервера: ${JSON.stringify(error.response.data)}`;
+      }
+
+      throw new InternalServerErrorException(errorMessage);
     }
   }
 
@@ -489,6 +562,7 @@ export class ChatService {
       this.configService.get<string>('GIGACHAT_AUTH_KEY')?.trim();
 
     if (explicitKey) {
+      this.logger.debug('Using explicit GIGACHAT_AUTH_KEY');
       return explicitKey;
     }
 
@@ -497,14 +571,22 @@ export class ChatService {
       this.configService.get<string>('GIGACHAT_CLIENT_SECRET')?.trim();
 
     if (!clientId || !clientSecret) {
+      const missingFields: string[] = [];
+      if (!clientId) missingFields.push('GIGACHAT_CLIENT_ID');
+      if (!clientSecret) missingFields.push('GIGACHAT_CLIENT_SECRET');
+      
       this.logger.error(
-        'GIGACHAT_AUTH_KEY или пара GIGACHAT_CLIENT_ID/GIGACHAT_CLIENT_SECRET не настроены.',
+        `GigaChat credentials not configured. Missing: ${missingFields.join(', ')}. ` +
+        `Either set GIGACHAT_AUTH_KEY or provide both GIGACHAT_CLIENT_ID and GIGACHAT_CLIENT_SECRET.`,
       );
       throw new InternalServerErrorException(
-        'Данные доступа к GigaЧату не настроены.',
+        `Данные доступа к GigaЧату не настроены. Отсутствуют: ${missingFields.join(', ')}. ` +
+        `Установите GIGACHAT_AUTH_KEY или пару GIGACHAT_CLIENT_ID/GIGACHAT_CLIENT_SECRET.`,
       );
     }
 
-    return Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const base64Auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    this.logger.debug('Built authorization header from CLIENT_ID/CLIENT_SECRET');
+    return base64Auth;
   }
 }

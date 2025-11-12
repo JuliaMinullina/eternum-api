@@ -54,4 +54,7 @@ export class User {
 
   @OneToMany(() => Chat, (chat) => chat.user)
   chats: Chat[];
+
+  @OneToMany('RecommendedTrack', 'user')
+  recommendedTracks: any[];
 }

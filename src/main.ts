@@ -6,18 +6,19 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  try {
+    const app = await NestFactory.create(AppModule);
 
-  // Подключаем cookie-parser
-  app.use(cookieParser());
+    // Подключаем cookie-parser
+    app.use(cookieParser());
 
-  // Настройка CORS: разрешить все домены (отражаем Origin) с поддержкой credentials
-  app.enableCors({
-    origin: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    credentials: true,
-  });
+    // Настройка CORS: разрешить все домены (отражаем Origin) с поддержкой credentials
+    app.enableCors({
+      origin: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+      credentials: true,
+    });
 
   // Убираем глобальный префикс для совместимости с фронтендом
   // app.setGlobalPrefix('api');
@@ -35,9 +36,13 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
-  console.log(
-    `Your application is running on: http://localhost:${process.env.PORT ?? 3000}`,
-  );
+    await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
+    console.log(
+      `Your application is running on: http://localhost:${process.env.PORT ?? 3000}`,
+    );
+  } catch (error) {
+    console.error('Error starting application:', error);
+    process.exit(1);
+  }
 }
 bootstrap();

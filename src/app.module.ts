@@ -23,6 +23,9 @@ import { Chat } from './modules/chat/chat.entity';
 import { Message } from './modules/chat/message.entity';
 import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.middleware';
 import { ChatModule } from './modules/chat/chat.module';
+import { RecommendedTrack } from './modules/recommended-track/recommended-track.entity';
+import { TrackItem } from './modules/recommended-track/track-item.entity';
+import { RecommendedTrackModule } from './modules/recommended-track/recommended-track.module';
 
 @Module({
   imports: [
@@ -47,6 +50,8 @@ import { ChatModule } from './modules/chat/chat.module';
         RefreshToken,
         Chat,
         Message,
+        RecommendedTrack,
+        TrackItem,
       ],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
       migrationsRun: true,
@@ -61,6 +66,7 @@ import { ChatModule } from './modules/chat/chat.module';
     MetaTagModule,
     DisciplineMetaTagModule,
     ChatModule,
+    RecommendedTrackModule,
   ],
   controllers: [AppController],
   providers: [AppService],

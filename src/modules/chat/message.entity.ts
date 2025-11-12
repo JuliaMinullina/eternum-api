@@ -1,12 +1,12 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   RelationId,
+  BeforeInsert,
 } from 'typeorm';
 import { Chat } from './chat.entity';
 
@@ -37,6 +37,19 @@ export class Message {
   @RelationId((message: Message) => message.chat)
   chatId: string;
 
-  @CreateDateColumn()
+  @Column({ type: 'timestamptz' })
   createdAt: Date;
+
+  @BeforeInsert()
+  setCreatedAt() {
+    // Устанавливаем время по Москве (UTC+3)
+    // Получаем текущее UTC время
+    const now = new Date();
+    const utcTimestamp = now.getTime();
+    
+    // Москва UTC+3, добавляем 3 часа к UTC времени
+    // Это создаст дату, которая при интерпретации как UTC будет показывать московское время
+    const moscowOffsetMs = 3 * 60 * 60 * 1000;
+    this.createdAt = new Date(utcTimestamp + moscowOffsetMs);
+  }
 }

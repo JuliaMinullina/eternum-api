@@ -26,6 +26,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { RecommendedTrack } from './modules/recommended-track/recommended-track.entity';
 import { TrackItem } from './modules/recommended-track/track-item.entity';
 import { RecommendedTrackModule } from './modules/recommended-track/recommended-track.module';
+import { UserDailyLogin } from './modules/user/user-daily-login.entity';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { RecommendedTrackModule } from './modules/recommended-track/recommended-
         Message,
         RecommendedTrack,
         TrackItem,
+        UserDailyLogin,
       ],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
       migrationsRun: true,

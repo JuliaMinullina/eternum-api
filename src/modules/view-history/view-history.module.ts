@@ -7,6 +7,8 @@ import { Topic } from '../topic/topic.entity';
 import { Discipline } from '../discipline/discipline.entity';
 import { DisciplineMetaTag } from '../../entities/discipline-meta-tag.entity';
 import { MetaTag } from '../meta-tag/meta-tag.entity';
+import { TrackItem } from '../recommended-track/track-item.entity';
+import { RecommendedTrack } from '../recommended-track/recommended-track.entity';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { MetaTag } from '../meta-tag/meta-tag.entity';
       Discipline,
       DisciplineMetaTag,
       MetaTag,
+      TrackItem,
+      RecommendedTrack,
     ]),
   ],
   controllers: [ViewHistoryController],

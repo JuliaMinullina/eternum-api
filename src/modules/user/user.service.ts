@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './user.entity';
+import { UserDailyLogin } from './user-daily-login.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -26,6 +27,8 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(UserDailyLogin)
+    private dailyLoginRepository: Repository<UserDailyLogin>,
   ) {}
 
   async findAll(): Promise<UserWithoutPassword[]> {
@@ -137,5 +140,135 @@ export class UserService {
       return userWithoutPassword;
     }
     return null;
+  }
+
+  /**
+   * Записывает ежедневный вход пользователя
+   * Если запись за сегодня уже существует, ничего не делает
+   */
+  async recordDailyLogin(userId: string): Promise<void> {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Устанавливаем время на начало дня
+
+      console.log(`📅 Recording daily login for user ${userId}, date: ${today.toISOString()}`);
+
+      // Проверяем, есть ли уже запись за сегодня
+      const existingLogin = await this.dailyLoginRepository.findOne({
+        where: {
+          UserID: userId,
+          LoginDate: today,
+        },
+      });
+
+      // Если записи нет, создаем новую
+      if (!existingLogin) {
+        const dailyLogin = this.dailyLoginRepository.create({
+          UserID: userId,
+          LoginDate: today,
+        });
+        await this.dailyLoginRepository.save(dailyLogin);
+        console.log(`✅ Daily login recorded for user ${userId}`);
+      } else {
+        console.log(`ℹ️ Daily login already exists for user ${userId} today`);
+      }
+    } catch (error: any) {
+      // Проверяем, является ли ошибка ошибкой отсутствия таблицы
+      if (error?.message?.includes('does not exist') || error?.code === '42P01') {
+        console.error(`❌ Table user_daily_logins does not exist. Please run migrations.`);
+        // Не пробрасываем ошибку, чтобы не ломать авторизацию
+        return;
+      }
+      console.error(`❌ Error recording daily login for user ${userId}:`, error);
+      // Не пробрасываем ошибку, чтобы не ломать авторизацию
+    }
+  }
+
+  /**
+   * Подсчитывает количество дней подряд, которые пользователь заходил в приложение
+   * Дни считаются подряд от сегодня назад
+   * Минимальное значение - 1 день (если пользователь заходил сегодня)
+   */
+  async getConsecutiveLoginDays(userId: string): Promise<number> {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      console.log(`📊 Getting consecutive login days for user ${userId}`);
+
+      // Получаем все записи входов пользователя, отсортированные по дате (от новых к старым)
+      const logins = await this.dailyLoginRepository.find({
+        where: { UserID: userId },
+        order: { LoginDate: 'DESC' },
+      });
+
+      console.log(`📊 Found ${logins.length} login records for user ${userId}`);
+
+      if (logins.length === 0) {
+        console.log(`📊 No login records found, returning 0`);
+        return 0;
+      }
+
+    // Функция для нормализации даты (приведение к началу дня и сравнение)
+    const normalizeDate = (date: Date | string): string => {
+      const d = typeof date === 'string' ? new Date(date) : date;
+      const normalized = new Date(d);
+      normalized.setHours(0, 0, 0, 0);
+      return normalized.toISOString().split('T')[0]; // Формат YYYY-MM-DD
+    };
+
+    // Создаем Set из нормализованных дат для быстрого поиска
+    const loginDates = new Set(logins.map((login) => normalizeDate(login.LoginDate)));
+    const todayNormalized = normalizeDate(today);
+
+      // Проверяем, есть ли запись за сегодня
+      const hasTodayLogin = loginDates.has(todayNormalized);
+      console.log(`📊 Today normalized: ${todayNormalized}`);
+      console.log(`📊 Has today login: ${hasTodayLogin}`);
+      console.log(`📊 Login dates:`, Array.from(loginDates).slice(0, 10));
+
+      // Если пользователь не заходил сегодня, возвращаем 0
+      if (!hasTodayLogin) {
+        console.log(`📊 User did not login today, returning 0`);
+        return 0;
+      }
+
+      // Если пользователь заходил сегодня, начинаем считать от сегодня
+      let checkDate = new Date(today);
+      let consecutiveDays = 0;
+
+      console.log(`📊 Starting count from today: ${todayNormalized}`);
+
+      // Проверяем дни подряд от сегодня назад
+      for (let i = 0; i < 365; i++) {
+        // Максимум проверяем год назад
+        const dateNormalized = normalizeDate(checkDate);
+        const hasLogin = loginDates.has(dateNormalized);
+
+        if (hasLogin) {
+          consecutiveDays++;
+          console.log(`📊 Day ${consecutiveDays}: ${dateNormalized} - has login`);
+          // Переходим к предыдущему дню
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          // Если пропущен день, прерываем подсчет
+          console.log(`📊 Day ${dateNormalized} - no login, stopping count`);
+          break;
+        }
+      }
+
+      // Минимальное значение - 1 день (если пользователь заходил сегодня)
+      const result = Math.max(1, consecutiveDays);
+      console.log(`📊 Consecutive login days for user ${userId}: ${result} (raw count: ${consecutiveDays})`);
+      return result;
+    } catch (error: any) {
+      // Проверяем, является ли ошибка ошибкой отсутствия таблицы
+      if (error?.message?.includes('does not exist') || error?.code === '42P01') {
+        console.error(`❌ Table user_daily_logins does not exist. Please run migrations.`);
+        return 0;
+      }
+      console.error(`❌ Error getting consecutive login days for user ${userId}:`, error);
+      return 0;
+    }
   }
 }

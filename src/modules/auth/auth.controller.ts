@@ -83,6 +83,13 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('verify')
   async verifyToken(@Request() req) {
+    // Записываем ежедневный вход при проверке токена (неблокирующая операция)
+    try {
+      await this.userService.recordDailyLogin(req.user.UserID);
+    } catch (error) {
+      // Логируем ошибку, но не прерываем процесс проверки токена
+      console.error('Ошибка записи ежедневного входа:', error);
+    }
     return { valid: true, user: req.user };
   }
 

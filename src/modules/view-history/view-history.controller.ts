@@ -8,6 +8,8 @@ import {
   Query,
   UseGuards,
   Request,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { ViewHistoryService } from './view-history.service';
 import { CreateViewHistoryDto } from './dto/create-view-history.dto';
@@ -153,5 +155,17 @@ export class ViewHistoryController {
   @UseGuards(JwtAuthGuard)
   async clearUserHistory(@Request() req): Promise<void> {
     return this.viewHistoryService.clearUserHistory(req.user.UserID);
+  }
+
+  @Get('recommended-disciplines')
+  @UseGuards(JwtAuthGuard)
+  async getTopRecommendedDisciplines(
+    @Request() req,
+    @Query('limit', new DefaultValuePipe(5), ParseIntPipe) limit: number,
+  ): Promise<Discipline[]> {
+    return this.viewHistoryService.getTopRecommendedDisciplines(
+      req.user.UserID,
+      limit,
+    );
   }
 }

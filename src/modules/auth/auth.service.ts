@@ -48,6 +48,14 @@ export class AuthService {
     // Создаем refresh token (72 часа)
     const refreshToken = await this.createRefreshToken(user.UserID);
 
+    // Записываем ежедневный вход (неблокирующая операция)
+    try {
+      await this.userService.recordDailyLogin(user.UserID);
+    } catch (error) {
+      // Логируем ошибку, но не прерываем процесс логина
+      console.error('Ошибка записи ежедневного входа:', error);
+    }
+
     console.log('🔐 AuthService: Tokens generated');
     console.log('Access token length:', accessToken.length);
     console.log('Refresh token length:', refreshToken.token.length);

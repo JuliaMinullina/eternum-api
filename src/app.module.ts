@@ -19,7 +19,10 @@ import { ViewHistory } from './modules/view-history/view-history.entity';
 import { MetaTag } from './modules/meta-tag/meta-tag.entity';
 import { DisciplineMetaTag } from './entities/discipline-meta-tag.entity';
 import { RefreshToken } from './modules/auth/refresh-token.entity';
+import { Chat } from './modules/chat/chat.entity';
+import { Message } from './modules/chat/message.entity';
 import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.middleware';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -33,7 +36,18 @@ import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.midd
       username: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || 'password',
       database: process.env.DB_NAME || 'eternum_db',
-      entities: [User, Discipline, Topic, Lesson, ViewHistory, MetaTag, DisciplineMetaTag, RefreshToken],
+      entities: [
+        User,
+        Discipline,
+        Topic,
+        Lesson,
+        ViewHistory,
+        MetaTag,
+        DisciplineMetaTag,
+        RefreshToken,
+        Chat,
+        Message,
+      ],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
       migrationsRun: true,
       synchronize: false,
@@ -46,6 +60,7 @@ import { CookieAuthMiddleware } from './modules/auth/middleware/cookie-auth.midd
     ViewHistoryModule,
     MetaTagModule,
     DisciplineMetaTagModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

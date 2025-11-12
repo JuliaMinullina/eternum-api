@@ -1,23 +1,23 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class InitialMigration1700000000000 implements MigrationInterface {
-    name = 'InitialMigration1700000000000'
+  name = 'InitialMigration1700000000000';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // Установка расширения uuid
-        await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // Установка расширения uuid
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
-        // Если база уже инициализирована (есть таблица users), выходим
-        const usersTableExists = await queryRunner.query(`
+    // Если база уже инициализирована (есть таблица users), выходим
+    const usersTableExists = await queryRunner.query(`
             SELECT 1 FROM information_schema.tables 
             WHERE table_schema = 'public' AND table_name = 'users'
         `);
-        if (Array.isArray(usersTableExists) && usersTableExists.length > 0) {
-            return; // Схема уже развёрнута – пропускаем миграцию
-        }
+    if (Array.isArray(usersTableExists) && usersTableExists.length > 0) {
+      return; // Схема уже развёрнута – пропускаем миграцию
+    }
 
-        // Создание enum для ролей пользователей (идемпотентно)
-        await queryRunner.query(`
+    // Создание enum для ролей пользователей (идемпотентно)
+    await queryRunner.query(`
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -31,8 +31,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             END $$;
         `);
 
-        // Создание enum для типов просмотров (идемпотентно)
-        await queryRunner.query(`
+    // Создание enum для типов просмотров (идемпотентно)
+    await queryRunner.query(`
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -46,8 +46,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             END $$;
         `);
 
-        // Создание таблицы пользователей
-        await queryRunner.query(`
+    // Создание таблицы пользователей
+    await queryRunner.query(`
             CREATE TABLE "users" (
                 "UserID" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "Role" "user_role_enum" NOT NULL DEFAULT 'user',
@@ -63,8 +63,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             )
         `);
 
-        // Создание таблицы дисциплин
-        await queryRunner.query(`
+    // Создание таблицы дисциплин
+    await queryRunner.query(`
             CREATE TABLE "disciplines" (
                 "DisciplineID" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "DisciplineName" character varying(255) NOT NULL,
@@ -74,8 +74,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             )
         `);
 
-        // Создание таблицы мета-тегов
-        await queryRunner.query(`
+    // Создание таблицы мета-тегов
+    await queryRunner.query(`
             CREATE TABLE "meta_tags" (
                 "MetaTagCode" character varying(50) NOT NULL,
                 "MetaTagName" character varying(100) NOT NULL,
@@ -85,8 +85,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             )
         `);
 
-        // Создание таблицы связи дисциплин и мета-тегов
-        await queryRunner.query(`
+    // Создание таблицы связи дисциплин и мета-тегов
+    await queryRunner.query(`
             CREATE TABLE "discipline_meta_tags" (
                 "DisciplineID" uuid NOT NULL,
                 "MetaTagCode" character varying(50) NOT NULL,
@@ -95,8 +95,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             )
         `);
 
-        // Создание таблицы тем
-        await queryRunner.query(`
+    // Создание таблицы тем
+    await queryRunner.query(`
             CREATE TABLE "topics" (
                 "TopicID" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "TopicName" character varying(255) NOT NULL,
@@ -107,8 +107,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             )
         `);
 
-        // Создание таблицы уроков
-        await queryRunner.query(`
+    // Создание таблицы уроков
+    await queryRunner.query(`
             CREATE TABLE "lessons" (
                 "LessonID" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "LessonName" character varying(255) NOT NULL,
@@ -119,8 +119,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             )
         `);
 
-        // Создание таблицы истории просмотров
-        await queryRunner.query(`
+    // Создание таблицы истории просмотров
+    await queryRunner.query(`
             CREATE TABLE "view_history" (
                 "ViewHistoryID" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "UserID" uuid NOT NULL,
@@ -133,8 +133,8 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             )
         `);
 
-        // Создание таблицы refresh токенов
-        await queryRunner.query(`
+    // Создание таблицы refresh токенов
+    await queryRunner.query(`
             CREATE TABLE "refresh_tokens" (
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "token" character varying NOT NULL,
@@ -146,79 +146,95 @@ export class InitialMigration1700000000000 implements MigrationInterface {
             )
         `);
 
-        // Добавление внешних ключей
-        await queryRunner.query(`
+    // Добавление внешних ключей
+    await queryRunner.query(`
             ALTER TABLE "discipline_meta_tags" 
             ADD CONSTRAINT "FK_discipline_meta_tags_discipline" 
             FOREIGN KEY ("DisciplineID") REFERENCES "disciplines"("DisciplineID") ON DELETE CASCADE
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "discipline_meta_tags" 
             ADD CONSTRAINT "FK_discipline_meta_tags_meta_tag" 
             FOREIGN KEY ("MetaTagCode") REFERENCES "meta_tags"("MetaTagCode") ON DELETE CASCADE
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "topics" 
             ADD CONSTRAINT "FK_topics_discipline" 
             FOREIGN KEY ("DisciplineID") REFERENCES "disciplines"("DisciplineID") ON DELETE CASCADE
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "lessons" 
             ADD CONSTRAINT "FK_lessons_topic" 
             FOREIGN KEY ("TopicID") REFERENCES "topics"("TopicID") ON DELETE CASCADE
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "view_history" 
             ADD CONSTRAINT "FK_view_history_user" 
             FOREIGN KEY ("UserID") REFERENCES "users"("UserID") ON DELETE CASCADE
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "view_history" 
             ADD CONSTRAINT "FK_view_history_discipline" 
             FOREIGN KEY ("DisciplineID") REFERENCES "disciplines"("DisciplineID") ON DELETE CASCADE
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "view_history" 
             ADD CONSTRAINT "FK_view_history_topic" 
             FOREIGN KEY ("TopicID") REFERENCES "topics"("TopicID") ON DELETE CASCADE
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "view_history" 
             ADD CONSTRAINT "FK_view_history_lesson" 
             FOREIGN KEY ("LessonID") REFERENCES "lessons"("LessonID") ON DELETE CASCADE
         `);
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        // Удаление внешних ключей
-        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_lesson"`);
-        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_topic"`);
-        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_discipline"`);
-        await queryRunner.query(`ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_user"`);
-        await queryRunner.query(`ALTER TABLE "lessons" DROP CONSTRAINT "FK_lessons_topic"`);
-        await queryRunner.query(`ALTER TABLE "topics" DROP CONSTRAINT "FK_topics_discipline"`);
-        await queryRunner.query(`ALTER TABLE "discipline_meta_tags" DROP CONSTRAINT "FK_discipline_meta_tags_meta_tag"`);
-        await queryRunner.query(`ALTER TABLE "discipline_meta_tags" DROP CONSTRAINT "FK_discipline_meta_tags_discipline"`);
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    // Удаление внешних ключей
+    await queryRunner.query(
+      `ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_lesson"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_topic"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_discipline"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "view_history" DROP CONSTRAINT "FK_view_history_user"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "lessons" DROP CONSTRAINT "FK_lessons_topic"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "topics" DROP CONSTRAINT "FK_topics_discipline"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "discipline_meta_tags" DROP CONSTRAINT "FK_discipline_meta_tags_meta_tag"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "discipline_meta_tags" DROP CONSTRAINT "FK_discipline_meta_tags_discipline"`,
+    );
 
-        // Удаление таблиц
-        await queryRunner.query(`DROP TABLE "refresh_tokens"`);
-        await queryRunner.query(`DROP TABLE "view_history"`);
-        await queryRunner.query(`DROP TABLE "lessons"`);
-        await queryRunner.query(`DROP TABLE "topics"`);
-        await queryRunner.query(`DROP TABLE "discipline_meta_tags"`);
-        await queryRunner.query(`DROP TABLE "meta_tags"`);
-        await queryRunner.query(`DROP TABLE "disciplines"`);
-        await queryRunner.query(`DROP TABLE "users"`);
+    // Удаление таблиц
+    await queryRunner.query(`DROP TABLE "refresh_tokens"`);
+    await queryRunner.query(`DROP TABLE "view_history"`);
+    await queryRunner.query(`DROP TABLE "lessons"`);
+    await queryRunner.query(`DROP TABLE "topics"`);
+    await queryRunner.query(`DROP TABLE "discipline_meta_tags"`);
+    await queryRunner.query(`DROP TABLE "meta_tags"`);
+    await queryRunner.query(`DROP TABLE "disciplines"`);
+    await queryRunner.query(`DROP TABLE "users"`);
 
-        // Удаление enum типов (без ошибок, если уже удалены)
-        await queryRunner.query(`DROP TYPE IF EXISTS "view_type_enum"`);
-        await queryRunner.query(`DROP TYPE IF EXISTS "user_role_enum"`);
-    }
+    // Удаление enum типов (без ошибок, если уже удалены)
+    await queryRunner.query(`DROP TYPE IF EXISTS "view_type_enum"`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "user_role_enum"`);
+  }
 }

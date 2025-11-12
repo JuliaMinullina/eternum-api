@@ -16,7 +16,10 @@ const metaTagsData = [
   { MetaTagCode: 'LANGUAGES', MetaTagName: 'Языки' },
   { MetaTagCode: 'LITERATURE', MetaTagName: 'Литература' },
   { MetaTagCode: 'ARTS', MetaTagName: 'Искусство' },
-  { MetaTagCode: 'HEALTH_SAFETY_PE', MetaTagName: 'Здоровье, физкультура и безопасность' }
+  {
+    MetaTagCode: 'HEALTH_SAFETY_PE',
+    MetaTagName: 'Здоровье, физкультура и безопасность',
+  },
 ];
 
 const disciplineToMetaTagData = [
@@ -36,24 +39,32 @@ const disciplineToMetaTagData = [
   { DisciplineName: 'Русский язык', MetaTagCode: 'LANGUAGES' },
   { DisciplineName: 'Иностранный язык — Английский', MetaTagCode: 'LANGUAGES' },
   { DisciplineName: 'Иностранный язык — Немецкий', MetaTagCode: 'LANGUAGES' },
-  { DisciplineName: 'Иностранный язык — Французский', MetaTagCode: 'LANGUAGES' },
+  {
+    DisciplineName: 'Иностранный язык — Французский',
+    MetaTagCode: 'LANGUAGES',
+  },
   { DisciplineName: 'Литература', MetaTagCode: 'LITERATURE' },
   { DisciplineName: 'Изобразительное искусство', MetaTagCode: 'ARTS' },
   { DisciplineName: 'Музыка', MetaTagCode: 'ARTS' },
   { DisciplineName: 'Физическая культура', MetaTagCode: 'HEALTH_SAFETY_PE' },
-  { DisciplineName: 'Основы безопасности жизнедеятельности', MetaTagCode: 'HEALTH_SAFETY_PE' }
+  {
+    DisciplineName: 'Основы безопасности жизнедеятельности',
+    MetaTagCode: 'HEALTH_SAFETY_PE',
+  },
 ];
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
-  
+
   try {
     const metaTagRepository = app.get(getRepositoryToken(MetaTag));
     const disciplineRepository = app.get(getRepositoryToken(Discipline));
-    const disciplineMetaTagRepository = app.get(getRepositoryToken(DisciplineMetaTag));
-    
+    const disciplineMetaTagRepository = app.get(
+      getRepositoryToken(DisciplineMetaTag),
+    );
+
     console.log('🌱 Начинаю заполнение мета-тегов...');
-    
+
     // Проверяем, есть ли уже мета-теги
     const existingMetaTags = await metaTagRepository.find();
     if (existingMetaTags.length > 0) {
@@ -63,37 +74,45 @@ async function bootstrap() {
       const createdMetaTags = await metaTagRepository.save(metaTagsData);
       console.log(`✅ Успешно создано ${createdMetaTags.length} мета-тегов:`);
       createdMetaTags.forEach((metaTag, index) => {
-        console.log(`   ${index + 1}. ${metaTag.MetaTagName} (${metaTag.MetaTagCode})`);
+        console.log(
+          `   ${index + 1}. ${metaTag.MetaTagName} (${metaTag.MetaTagCode})`,
+        );
       });
     }
-    
+
     console.log('\n🔗 Создаю связи дисциплин с мета-тегами...');
-    
+
     // Очищаем существующие связи
     await disciplineMetaTagRepository.clear();
-    
+
     // Создаем связи дисциплин с мета-тегами
     const createdLinks: DisciplineMetaTag[] = [];
     for (const linkData of disciplineToMetaTagData) {
       const discipline = await disciplineRepository.findOne({
-        where: { DisciplineName: linkData.DisciplineName }
+        where: { DisciplineName: linkData.DisciplineName },
       });
-      
+
       if (discipline) {
         const disciplineMetaTag = disciplineMetaTagRepository.create({
           DisciplineID: discipline.DisciplineID,
-          MetaTagCode: linkData.MetaTagCode
+          MetaTagCode: linkData.MetaTagCode,
         });
-        const savedLink = await disciplineMetaTagRepository.save(disciplineMetaTag);
+        const savedLink =
+          await disciplineMetaTagRepository.save(disciplineMetaTag);
         createdLinks.push(savedLink);
-        console.log(`   ✅ ${linkData.DisciplineName} → ${linkData.MetaTagCode}`);
+        console.log(
+          `   ✅ ${linkData.DisciplineName} → ${linkData.MetaTagCode}`,
+        );
       } else {
-        console.log(`   ⚠️  Дисциплина "${linkData.DisciplineName}" не найдена`);
+        console.log(
+          `   ⚠️  Дисциплина "${linkData.DisciplineName}" не найдена`,
+        );
       }
     }
-    
-    console.log(`\n🎉 Успешно создано ${createdLinks.length} связей дисциплин с мета-тегами!`);
-    
+
+    console.log(
+      `\n🎉 Успешно создано ${createdLinks.length} связей дисциплин с мета-тегами!`,
+    );
   } catch (error) {
     console.error('❌ Ошибка при заполнении мета-тегов:', error);
     throw error;

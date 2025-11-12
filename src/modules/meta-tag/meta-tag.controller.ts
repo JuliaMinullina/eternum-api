@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+} from '@nestjs/common';
 import { MetaTagService } from './meta-tag.service';
 import { MetaTag } from './meta-tag.entity';
 
@@ -7,7 +15,12 @@ export class MetaTagController {
   constructor(private readonly metaTagService: MetaTagService) {}
 
   @Get()
-  async findAll(): Promise<{ success: boolean; message: string; data: MetaTag[]; timestamp: string }> {
+  async findAll(): Promise<{
+    success: boolean;
+    message: string;
+    data: MetaTag[];
+    timestamp: string;
+  }> {
     const metaTags = await this.metaTagService.findAll();
     return {
       success: true,
@@ -18,7 +31,12 @@ export class MetaTagController {
   }
 
   @Get(':code')
-  async findByCode(@Param('code') code: string): Promise<{ success: boolean; message: string; data: MetaTag | null; timestamp: string }> {
+  async findByCode(@Param('code') code: string): Promise<{
+    success: boolean;
+    message: string;
+    data: MetaTag | null;
+    timestamp: string;
+  }> {
     const metaTag = await this.metaTagService.findByCode(code);
     return {
       success: true,
@@ -29,7 +47,12 @@ export class MetaTagController {
   }
 
   @Post()
-  async create(@Body() metaTag: Partial<MetaTag>): Promise<{ success: boolean; message: string; data: MetaTag; timestamp: string }> {
+  async create(@Body() metaTag: Partial<MetaTag>): Promise<{
+    success: boolean;
+    message: string;
+    data: MetaTag;
+    timestamp: string;
+  }> {
     const newMetaTag = await this.metaTagService.create(metaTag);
     return {
       success: true,
@@ -40,7 +63,15 @@ export class MetaTagController {
   }
 
   @Put(':code')
-  async update(@Param('code') code: string, @Body() metaTag: Partial<MetaTag>): Promise<{ success: boolean; message: string; data: MetaTag | null; timestamp: string }> {
+  async update(
+    @Param('code') code: string,
+    @Body() metaTag: Partial<MetaTag>,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: MetaTag | null;
+    timestamp: string;
+  }> {
     const updatedMetaTag = await this.metaTagService.update(code, metaTag);
     return {
       success: true,
@@ -51,7 +82,9 @@ export class MetaTagController {
   }
 
   @Delete(':code')
-  async delete(@Param('code') code: string): Promise<{ success: boolean; message: string; timestamp: string }> {
+  async delete(
+    @Param('code') code: string,
+  ): Promise<{ success: boolean; message: string; timestamp: string }> {
     await this.metaTagService.delete(code);
     return {
       success: true,

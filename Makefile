@@ -83,6 +83,10 @@ up:
 		sleep 5; \
 	done
 	@echo "$(GREEN)PostgreSQL готов!$(NC)"
+	@if [ "$(filter up,$(MAKECMDGOALS))" = "up" ]; then \
+		echo "$(GREEN)Запускаю проект после запуска контейнеров (start:dev)...$(NC)"; \
+		$(NPM) run start:dev; \
+	fi
 
 down:
 	@echo "$(YELLOW)Останавливаю Docker контейнеры...$(NC)"

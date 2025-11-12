@@ -1,9 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 export enum ViewType {
   DISCIPLINE = 'discipline',
   TOPIC = 'topic',
-  LESSON = 'lesson'
+  LESSON = 'lesson',
 }
 
 @Entity('view_history')
@@ -19,7 +26,7 @@ export class ViewHistory {
 
   @Column({
     type: 'enum',
-    enum: ViewType
+    enum: ViewType,
   })
   ViewType: ViewType;
 

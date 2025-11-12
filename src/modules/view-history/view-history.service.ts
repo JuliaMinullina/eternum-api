@@ -23,7 +23,10 @@ export class ViewHistoryService {
     private metaTagRepository: Repository<MetaTag>,
   ) {}
 
-  async create(createViewHistoryDto: CreateViewHistoryDto, userId: string): Promise<ViewHistory> {
+  async create(
+    createViewHistoryDto: CreateViewHistoryDto,
+    userId: string,
+  ): Promise<ViewHistory> {
     // Проверяем, есть ли уже запись для этого пользователя и контента
     const existingView = await this.viewHistoryRepository.findOne({
       where: {
@@ -56,14 +59,20 @@ export class ViewHistoryService {
     });
   }
 
-  async findByUserAndType(userId: string, viewType: ViewType): Promise<ViewHistory[]> {
+  async findByUserAndType(
+    userId: string,
+    viewType: ViewType,
+  ): Promise<ViewHistory[]> {
     return this.viewHistoryRepository.find({
       where: { UserID: userId, ViewType: viewType },
       order: { ViewedAt: 'DESC' },
     });
   }
 
-  async findRecentByUser(userId: string, limit: number = 10): Promise<ViewHistory[]> {
+  async findRecentByUser(
+    userId: string,
+    limit: number = 10,
+  ): Promise<ViewHistory[]> {
     return this.viewHistoryRepository.find({
       where: { UserID: userId },
       order: { ViewedAt: 'DESC' },
@@ -91,12 +100,18 @@ export class ViewHistoryService {
 
   // Сохранение артефакта при старте изучения темы
   async recordTopicStart(userId: string, topicId: string): Promise<void> {
-    const topic = await this.topicRepository.findOne({ where: { TopicID: topicId } });
+    const topic = await this.topicRepository.findOne({
+      where: { TopicID: topicId },
+    });
     if (!topic) throw new NotFoundException('Topic not found');
 
     // 1) Уникальная тема
     const existingTopicView = await this.viewHistoryRepository.findOne({
-      where: { UserID: userId, ViewType: ViewType.TOPIC, TopicID: topic.TopicID },
+      where: {
+        UserID: userId,
+        ViewType: ViewType.TOPIC,
+        TopicID: topic.TopicID,
+      },
     });
     if (!existingTopicView) {
       await this.viewHistoryRepository.save(
@@ -111,7 +126,11 @@ export class ViewHistoryService {
 
     // 2) Уникальная дисциплина
     const existingDisciplineView = await this.viewHistoryRepository.findOne({
-      where: { UserID: userId, ViewType: ViewType.DISCIPLINE, DisciplineID: topic.DisciplineID },
+      where: {
+        UserID: userId,
+        ViewType: ViewType.DISCIPLINE,
+        DisciplineID: topic.DisciplineID,
+      },
     });
     if (!existingDisciplineView) {
       await this.viewHistoryRepository.save(
@@ -136,27 +155,43 @@ export class ViewHistoryService {
 
   // Уникальные списки по пользователю
   async getUniqueVisitedTopics(userId: string): Promise<Topic[]> {
-    const views = await this.viewHistoryRepository.find({ where: { UserID: userId, ViewType: ViewType.TOPIC } });
-    const topicIds = [...new Set(views.map(v => v.TopicID).filter(Boolean))] as string[];
+    const views = await this.viewHistoryRepository.find({
+      where: { UserID: userId, ViewType: ViewType.TOPIC },
+    });
+    const topicIds = [
+      ...new Set(views.map((v) => v.TopicID).filter(Boolean)),
+    ] as string[];
     if (topicIds.length === 0) return [];
     return this.topicRepository.find({ where: { TopicID: In(topicIds) } });
   }
 
   async getUniqueVisitedDisciplines(userId: string): Promise<Discipline[]> {
-    const views = await this.viewHistoryRepository.find({ where: { UserID: userId, ViewType: ViewType.DISCIPLINE } });
-    const disciplineIds = [...new Set(views.map(v => v.DisciplineID).filter(Boolean))] as string[];
+    const views = await this.viewHistoryRepository.find({
+      where: { UserID: userId, ViewType: ViewType.DISCIPLINE },
+    });
+    const disciplineIds = [
+      ...new Set(views.map((v) => v.DisciplineID).filter(Boolean)),
+    ] as string[];
     if (disciplineIds.length === 0) return [];
-    return this.disciplineRepository.find({ where: { DisciplineID: In(disciplineIds) } });
+    return this.disciplineRepository.find({
+      where: { DisciplineID: In(disciplineIds) },
+    });
   }
 
   async getUniqueVisitedMetaTags(userId: string): Promise<MetaTag[]> {
     // Берем уникальные дисциплины пользователя, затем маппим на метатеги
     const disciplines = await this.getUniqueVisitedDisciplines(userId);
     if (disciplines.length === 0) return [];
-    const disciplineIds = disciplines.map(d => d.DisciplineID);
-    const disciplineMetaTags = await this.disciplineMetaTagRepository.find({ where: { DisciplineID: In(disciplineIds) } });
-    const metaTagCodes = [...new Set(disciplineMetaTags.map(dmt => dmt.MetaTagCode))];
+    const disciplineIds = disciplines.map((d) => d.DisciplineID);
+    const disciplineMetaTags = await this.disciplineMetaTagRepository.find({
+      where: { DisciplineID: In(disciplineIds) },
+    });
+    const metaTagCodes = [
+      ...new Set(disciplineMetaTags.map((dmt) => dmt.MetaTagCode)),
+    ];
     if (metaTagCodes.length === 0) return [];
-    return this.metaTagRepository.find({ where: { MetaTagCode: In(metaTagCodes) } });
+    return this.metaTagRepository.find({
+      where: { MetaTagCode: In(metaTagCodes) },
+    });
   }
 }

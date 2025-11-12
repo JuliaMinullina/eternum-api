@@ -9,7 +9,15 @@ import { DisciplineMetaTag } from '../../entities/discipline-meta-tag.entity';
 import { MetaTag } from '../meta-tag/meta-tag.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ViewHistory, Topic, Discipline, DisciplineMetaTag, MetaTag])],
+  imports: [
+    TypeOrmModule.forFeature([
+      ViewHistory,
+      Topic,
+      Discipline,
+      DisciplineMetaTag,
+      MetaTag,
+    ]),
+  ],
   controllers: [ViewHistoryController],
   providers: [ViewHistoryService],
   exports: [ViewHistoryService],

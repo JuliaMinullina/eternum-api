@@ -1,8 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { Chat } from '../chat/chat.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
-  USER = 'user'
+  USER = 'user',
 }
 
 @Entity('users')
@@ -16,7 +24,7 @@ export class User {
   @Column({
     type: 'enum',
     enum: UserRole,
-    default: UserRole.USER
+    default: UserRole.USER,
   })
   Role: UserRole;
 
@@ -43,4 +51,7 @@ export class User {
 
   @OneToMany('ViewHistory', 'user')
   viewHistory: any[];
+
+  @OneToMany(() => Chat, (chat) => chat.user)
+  chats: Chat[];
 }

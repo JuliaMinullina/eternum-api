@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { TopicService } from './topic.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
@@ -19,7 +27,9 @@ export class TopicController {
   }
 
   @Get('discipline/:disciplineId')
-  async findByDiscipline(@Param('disciplineId') disciplineId: string): Promise<Topic[]> {
+  async findByDiscipline(
+    @Param('disciplineId') disciplineId: string,
+  ): Promise<Topic[]> {
     return this.topicService.findByDiscipline(disciplineId);
   }
 

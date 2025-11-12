@@ -15,9 +15,16 @@ export class MetaTag {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   CreatedAt: Date;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   UpdatedAt: Date;
 
-  @OneToMany(() => DisciplineMetaTag, disciplineMetaTag => disciplineMetaTag.metaTag)
+  @OneToMany(
+    () => DisciplineMetaTag,
+    (disciplineMetaTag) => disciplineMetaTag.metaTag,
+  )
   disciplineMetaTags: DisciplineMetaTag[];
 }

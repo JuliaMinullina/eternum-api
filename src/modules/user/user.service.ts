@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './user.entity';
@@ -26,15 +30,33 @@ export class UserService {
 
   async findAll(): Promise<UserWithoutPassword[]> {
     const users = await this.usersRepository.find({
-      select: ['UserID', 'Role', 'UserName', 'UserSurname', 'Email', 'isActive', 'createdAt', 'updatedAt'],
+      select: [
+        'UserID',
+        'Role',
+        'UserName',
+        'UserSurname',
+        'Email',
+        'isActive',
+        'createdAt',
+        'updatedAt',
+      ],
     });
     return users;
   }
 
   async findOne(id: string): Promise<UserWithoutPassword> {
-    const user = await this.usersRepository.findOne({ 
+    const user = await this.usersRepository.findOne({
       where: { UserID: id },
-      select: ['UserID', 'Role', 'UserName', 'UserSurname', 'Email', 'isActive', 'createdAt', 'updatedAt'],
+      select: [
+        'UserID',
+        'Role',
+        'UserName',
+        'UserSurname',
+        'Email',
+        'isActive',
+        'createdAt',
+        'updatedAt',
+      ],
     });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -43,9 +65,19 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ 
+    return this.usersRepository.findOne({
       where: { Email: email },
-      select: ['UserID', 'Role', 'UserName', 'UserSurname', 'Email', 'password', 'isActive', 'createdAt', 'updatedAt'],
+      select: [
+        'UserID',
+        'Role',
+        'UserName',
+        'UserSurname',
+        'Email',
+        'password',
+        'isActive',
+        'createdAt',
+        'updatedAt',
+      ],
     });
   }
 
@@ -66,8 +98,13 @@ export class UserService {
     return userWithoutPassword;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserWithoutPassword> {
-    const updatedUser = await this.usersRepository.findOne({ where: { UserID: id } });
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserWithoutPassword> {
+    const updatedUser = await this.usersRepository.findOne({
+      where: { UserID: id },
+    });
     if (!updatedUser) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -90,9 +127,12 @@ export class UserService {
     await this.usersRepository.remove(user);
   }
 
-  async validateUser(email: string, password: string): Promise<UserWithoutPassword | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<UserWithoutPassword | null> {
     const user = await this.findByEmail(email);
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       const { password, ...userWithoutPassword } = user;
       return userWithoutPassword;
     }

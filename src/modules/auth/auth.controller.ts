@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Response, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Request,
+  Response,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -26,7 +35,7 @@ export class AuthController {
 
     // Создаем пользователя
     const user = await this.userService.create(registerDto);
-    
+
     // Логиним пользователя
     const result = await this.authService.login(user);
     return result;
@@ -36,8 +45,11 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Response() res) {
     console.log('🔐 Login attempt for:', loginDto.email);
-    
-    const user = await this.authService.validateUser(loginDto.email, loginDto.password);
+
+    const user = await this.authService.validateUser(
+      loginDto.email,
+      loginDto.password,
+    );
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -52,8 +64,13 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto, @Response() res) {
-    const result = await this.authService.refreshAccessToken(refreshTokenDto.refresh_token);
+  async refreshToken(
+    @Body() refreshTokenDto: RefreshTokenDto,
+    @Response() res,
+  ) {
+    const result = await this.authService.refreshAccessToken(
+      refreshTokenDto.refresh_token,
+    );
     return res.json(result);
   }
 
@@ -68,8 +85,6 @@ export class AuthController {
   async verifyToken(@Request() req) {
     return { valid: true, user: req.user };
   }
-
-  
 
   @Post('logout')
   async logout(@Body() logoutDto: LogoutDto, @Request() req, @Response() res) {

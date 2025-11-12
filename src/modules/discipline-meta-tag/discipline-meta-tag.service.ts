@@ -24,7 +24,10 @@ export class DisciplineMetaTagService {
     });
   }
 
-  async create(disciplineId: string, metaTagCode: string): Promise<DisciplineMetaTag> {
+  async create(
+    disciplineId: string,
+    metaTagCode: string,
+  ): Promise<DisciplineMetaTag> {
     const disciplineMetaTag = this.disciplineMetaTagRepository.create({
       DisciplineID: disciplineId,
       MetaTagCode: metaTagCode,
@@ -40,6 +43,8 @@ export class DisciplineMetaTagService {
   }
 
   async deleteByDisciplineId(disciplineId: string): Promise<void> {
-    await this.disciplineMetaTagRepository.delete({ DisciplineID: disciplineId });
+    await this.disciplineMetaTagRepository.delete({
+      DisciplineID: disciplineId,
+    });
   }
 }

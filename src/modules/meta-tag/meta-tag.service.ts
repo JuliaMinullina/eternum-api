@@ -23,7 +23,10 @@ export class MetaTagService {
     return this.metaTagRepository.save(newMetaTag);
   }
 
-  async update(code: string, metaTag: Partial<MetaTag>): Promise<MetaTag | null> {
+  async update(
+    code: string,
+    metaTag: Partial<MetaTag>,
+  ): Promise<MetaTag | null> {
     await this.metaTagRepository.update(code, metaTag);
     return this.findByCode(code);
   }

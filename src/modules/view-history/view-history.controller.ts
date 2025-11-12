@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Delete, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Delete,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ViewHistoryService } from './view-history.service';
 import { CreateViewHistoryDto } from './dto/create-view-history.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -23,7 +33,10 @@ export class ViewHistoryController {
     @Request() req,
     @Body() createViewHistoryDto: CreateViewHistoryDto,
   ): Promise<ViewHistory> {
-    return this.viewHistoryService.create(createViewHistoryDto, req.user.UserID);
+    return this.viewHistoryService.create(
+      createViewHistoryDto,
+      req.user.UserID,
+    );
   }
 
   @Post('topic/:topicId')
@@ -39,7 +52,10 @@ export class ViewHistoryController {
       TopicID: topicId,
       LessonID: undefined,
     };
-    return this.viewHistoryService.create(createViewHistoryDto, req.user.UserID);
+    return this.viewHistoryService.create(
+      createViewHistoryDto,
+      req.user.UserID,
+    );
   }
 
   // Артефакт истории: пользователь нажал «Начать изучение» темы
@@ -48,7 +64,7 @@ export class ViewHistoryController {
   async recordTopicStart(
     @Request() req,
     @Param('topicId') topicId: string,
-  ): Promise<{ ok: true }>{
+  ): Promise<{ ok: true }> {
     await this.viewHistoryService.recordTopicStart(req.user.UserID, topicId);
     return { ok: true };
   }
@@ -65,7 +81,10 @@ export class ViewHistoryController {
       TopicID: undefined,
       LessonID: undefined,
     };
-    return this.viewHistoryService.create(createViewHistoryDto, req.user.UserID);
+    return this.viewHistoryService.create(
+      createViewHistoryDto,
+      req.user.UserID,
+    );
   }
 
   @Post('lesson/:lessonId')
@@ -81,7 +100,10 @@ export class ViewHistoryController {
       TopicID: body.topicId,
       LessonID: lessonId,
     };
-    return this.viewHistoryService.create(createViewHistoryDto, req.user.UserID);
+    return this.viewHistoryService.create(
+      createViewHistoryDto,
+      req.user.UserID,
+    );
   }
 
   @Get('recent')

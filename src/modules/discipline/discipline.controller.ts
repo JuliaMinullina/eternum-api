@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { DisciplineService } from './discipline.service';
 import { CreateDisciplineDto } from './dto/create-discipline.dto';
 import { UpdateDisciplineDto } from './dto/update-discipline.dto';
@@ -8,7 +16,12 @@ export class DisciplineController {
   constructor(private readonly disciplineService: DisciplineService) {}
 
   @Get()
-  async findAll(): Promise<{ success: boolean; message: string; data: any[]; timestamp: string }> {
+  async findAll(): Promise<{
+    success: boolean;
+    message: string;
+    data: any[];
+    timestamp: string;
+  }> {
     const disciplines = await this.disciplineService.findAll();
     return {
       success: true,
@@ -19,7 +32,12 @@ export class DisciplineController {
   }
 
   @Get('with-meta-tags')
-  async findAllWithMetaTags(): Promise<{ success: boolean; message: string; data: any[]; timestamp: string }> {
+  async findAllWithMetaTags(): Promise<{
+    success: boolean;
+    message: string;
+    data: any[];
+    timestamp: string;
+  }> {
     const disciplines = await this.disciplineService.findAll();
     return {
       success: true,
@@ -30,7 +48,12 @@ export class DisciplineController {
   }
 
   @Get('by-meta-tag/:metaTagCode')
-  async findByMetaTag(@Param('metaTagCode') metaTagCode: string): Promise<{ success: boolean; message: string; data: any[]; timestamp: string }> {
+  async findByMetaTag(@Param('metaTagCode') metaTagCode: string): Promise<{
+    success: boolean;
+    message: string;
+    data: any[];
+    timestamp: string;
+  }> {
     const disciplines = await this.disciplineService.findByMetaTag(metaTagCode);
     return {
       success: true,
@@ -41,7 +64,12 @@ export class DisciplineController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<{ success: boolean; message: string; data: any; timestamp: string }> {
+  async findOne(@Param('id') id: string): Promise<{
+    success: boolean;
+    message: string;
+    data: any;
+    timestamp: string;
+  }> {
     const discipline = await this.disciplineService.findOne(id);
     return {
       success: true,
@@ -52,7 +80,12 @@ export class DisciplineController {
   }
 
   @Post()
-  async create(@Body() createDisciplineDto: CreateDisciplineDto): Promise<{ success: boolean; message: string; data: any; timestamp: string }> {
+  async create(@Body() createDisciplineDto: CreateDisciplineDto): Promise<{
+    success: boolean;
+    message: string;
+    data: any;
+    timestamp: string;
+  }> {
     const discipline = await this.disciplineService.create(createDisciplineDto);
     return {
       success: true,
@@ -63,8 +96,19 @@ export class DisciplineController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateDisciplineDto: UpdateDisciplineDto): Promise<{ success: boolean; message: string; data: any; timestamp: string }> {
-    const discipline = await this.disciplineService.update(id, updateDisciplineDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateDisciplineDto: UpdateDisciplineDto,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: any;
+    timestamp: string;
+  }> {
+    const discipline = await this.disciplineService.update(
+      id,
+      updateDisciplineDto,
+    );
     return {
       success: true,
       message: 'Discipline updated successfully',
@@ -74,7 +118,9 @@ export class DisciplineController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<{ success: boolean; message: string; timestamp: string }> {
+  async remove(
+    @Param('id') id: string,
+  ): Promise<{ success: boolean; message: string; timestamp: string }> {
     await this.disciplineService.remove(id);
     return {
       success: true,

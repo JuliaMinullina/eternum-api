@@ -16,11 +16,15 @@ export class DisciplineMetaTag {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   CreatedAt: Date;
 
-  @ManyToOne(() => Discipline, discipline => discipline.disciplineMetaTags, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Discipline, (discipline) => discipline.disciplineMetaTags, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'DisciplineID' })
   discipline: Discipline;
 
-  @ManyToOne(() => MetaTag, metaTag => metaTag.disciplineMetaTags, { onDelete: 'CASCADE' })
+  @ManyToOne(() => MetaTag, (metaTag) => metaTag.disciplineMetaTags, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'MetaTagCode' })
   metaTag: MetaTag;
 }

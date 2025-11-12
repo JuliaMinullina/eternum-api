@@ -18,8 +18,8 @@ export class AppController {
       data: {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        version: '1.0.0'
-      }
+        version: '1.0.0',
+      },
     };
   }
 
@@ -30,8 +30,8 @@ export class AppController {
       message: 'Test endpoint works without authorization',
       data: {
         message: 'Backend is working correctly!',
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
   }
 }

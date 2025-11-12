@@ -34,7 +34,10 @@ export class DisciplineService {
     return this.disciplineRepository.save(discipline);
   }
 
-  async update(id: string, updateDisciplineDto: UpdateDisciplineDto): Promise<Discipline> {
+  async update(
+    id: string,
+    updateDisciplineDto: UpdateDisciplineDto,
+  ): Promise<Discipline> {
     const discipline = await this.findOne(id);
     Object.assign(discipline, updateDisciplineDto);
     return this.disciplineRepository.save(discipline);

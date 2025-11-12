@@ -12,10 +12,13 @@ export default new DataSource({
   database: configService.get('DB_NAME', 'nestjs_db'),
   entities: [
     __dirname + '/../modules/**/*.entity{.ts,.js}',
-    __dirname + '/../entities/*.entity{.ts,.js}'
+    __dirname + '/../entities/*.entity{.ts,.js}',
   ],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false, // Всегда отключаем синхронизацию
   logging: configService.get('NODE_ENV') !== 'production',
-  ssl: configService.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
+  ssl:
+    configService.get('NODE_ENV') === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
 });

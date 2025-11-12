@@ -26,7 +26,7 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.findByEmail(email);
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       const { password, ...result } = user;
       return result;
     }
@@ -44,7 +44,7 @@ export class AuthService {
 
     // Создаем access token (24 часа)
     const accessToken = this.jwtService.sign(payload, { expiresIn: '24h' });
-    
+
     // Создаем refresh token (72 часа)
     const refreshToken = await this.createRefreshToken(user.UserID);
 
@@ -69,7 +69,7 @@ export class AuthService {
   private async createRefreshToken(userId: string): Promise<RefreshToken> {
     // Генерируем случайный токен
     const token = crypto.randomBytes(64).toString('hex');
-    
+
     // Создаем refresh token с истечением через 72 часа
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 72);
@@ -144,7 +144,7 @@ export class AuthService {
     // Отзываем все токены пользователя
     await this.refreshTokenRepository.update(
       { userId, isRevoked: false },
-      { isRevoked: true }
+      { isRevoked: true },
     );
   }
 

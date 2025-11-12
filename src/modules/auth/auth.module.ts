@@ -28,6 +28,4 @@ import { RefreshToken } from './refresh-token.entity';
   providers: [AuthService, JwtStrategy, LocalStrategy],
   exports: [AuthService],
 })
-export class AuthModule {
-  
-}
+export class AuthModule {}

@@ -27,48 +27,28 @@ export class RecommendedTrackController {
     @Body() dto: CreateTrackDto,
     @Request() req,
   ) {
-    const track = await this.trackService.create(dto, req.user.UserID);
-
-    return {
-      success: true,
-      message: 'Трек успешно создан',
-      data: track,
-    };
+    // TransformInterceptor автоматически обернет ответ
+    return await this.trackService.create(dto, req.user.UserID);
   }
 
   @Get('chat/:chatId')
   async findByChatId(
     @Param('chatId', new ParseUUIDPipe()) chatId: string,
   ) {
-    const track = await this.trackService.findByChatId(chatId);
-
-    return {
-      success: true,
-      message: 'Трек получен',
-      data: track,
-    };
+    // TransformInterceptor автоматически обернет ответ
+    return await this.trackService.findByChatId(chatId);
   }
 
   @Get('user/me')
   async findByUserId(@Request() req) {
-    const tracks = await this.trackService.findByUserId(req.user.UserID);
-
-    return {
-      success: true,
-      message: 'Треки пользователя получены',
-      data: tracks,
-    };
+    // TransformInterceptor автоматически обернет ответ
+    return await this.trackService.findByUserId(req.user.UserID);
   }
 
   @Get(':id')
   async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
-    const track = await this.trackService.findOne(id);
-
-    return {
-      success: true,
-      message: 'Трек получен',
-      data: track,
-    };
+    // TransformInterceptor автоматически обернет ответ
+    return await this.trackService.findOne(id);
   }
 
   @Put(':id')
@@ -77,13 +57,8 @@ export class RecommendedTrackController {
     @Body() dto: UpdateTrackDto,
     @Request() req,
   ) {
-    const track = await this.trackService.update(id, dto, req.user.UserID);
-
-    return {
-      success: true,
-      message: 'Трек успешно обновлен',
-      data: track,
-    };
+    // TransformInterceptor автоматически обернет ответ
+    return await this.trackService.update(id, dto, req.user.UserID);
   }
 
   @Delete(':id')
@@ -92,11 +67,8 @@ export class RecommendedTrackController {
     @Request() req,
   ) {
     await this.trackService.delete(id, req.user.UserID);
-
-    return {
-      success: true,
-      message: 'Трек успешно удален',
-    };
+    // TransformInterceptor автоматически обернет ответ
+    return { message: 'Трек успешно удален' };
   }
 }
 

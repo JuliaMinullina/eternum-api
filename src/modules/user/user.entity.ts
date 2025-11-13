@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { Chat } from '../chat/chat.entity';
 
@@ -57,4 +58,7 @@ export class User {
 
   @OneToMany('RecommendedTrack', 'user')
   recommendedTracks: any[];
+
+  @OneToOne('Profile', 'user')
+  profile: any;
 }

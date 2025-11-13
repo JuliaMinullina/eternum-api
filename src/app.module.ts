@@ -27,6 +27,8 @@ import { RecommendedTrack } from './modules/recommended-track/recommended-track.
 import { TrackItem } from './modules/recommended-track/track-item.entity';
 import { RecommendedTrackModule } from './modules/recommended-track/recommended-track.module';
 import { UserDailyLogin } from './modules/user/user-daily-login.entity';
+import { ProfileModule } from './modules/profile/profile.module';
+import { Profile } from './modules/profile/profile.entity';
 
 @Module({
   imports: [
@@ -54,6 +56,7 @@ import { UserDailyLogin } from './modules/user/user-daily-login.entity';
         RecommendedTrack,
         TrackItem,
         UserDailyLogin,
+        Profile,
       ],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
       migrationsRun: true,
@@ -69,6 +72,7 @@ import { UserDailyLogin } from './modules/user/user-daily-login.entity';
     DisciplineMetaTagModule,
     ChatModule,
     RecommendedTrackModule,
+    ProfileModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -186,7 +186,7 @@ export class UserService {
 
   /**
    * Подсчитывает количество дней подряд, которые пользователь заходил в приложение
-   * Дни считаются подряд от сегодня назад
+   * Дни считаются подряд от последнего дня входа назад
    * Минимальное значение - 1 день (если пользователь заходил сегодня)
    */
   async getConsecutiveLoginDays(userId: string): Promise<number> {
@@ -209,37 +209,31 @@ export class UserService {
         return 0;
       }
 
-    // Функция для нормализации даты (приведение к началу дня и сравнение)
-    const normalizeDate = (date: Date | string): string => {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      const normalized = new Date(d);
-      normalized.setHours(0, 0, 0, 0);
-      return normalized.toISOString().split('T')[0]; // Формат YYYY-MM-DD
-    };
+      // Функция для нормализации даты (приведение к началу дня и сравнение)
+      const normalizeDate = (date: Date | string): string => {
+        const d = typeof date === 'string' ? new Date(date) : date;
+        const normalized = new Date(d);
+        normalized.setHours(0, 0, 0, 0);
+        return normalized.toISOString().split('T')[0]; // Формат YYYY-MM-DD
+      };
 
-    // Создаем Set из нормализованных дат для быстрого поиска
-    const loginDates = new Set(logins.map((login) => normalizeDate(login.LoginDate)));
-    const todayNormalized = normalizeDate(today);
+      // Создаем Set из нормализованных дат для быстрого поиска
+      const loginDates = new Set(logins.map((login) => normalizeDate(login.LoginDate)));
+      const todayNormalized = normalizeDate(today);
 
       // Проверяем, есть ли запись за сегодня
       const hasTodayLogin = loginDates.has(todayNormalized);
-      console.log(`📊 Today normalized: ${todayNormalized}`);
-      console.log(`📊 Has today login: ${hasTodayLogin}`);
-      console.log(`📊 Login dates:`, Array.from(loginDates).slice(0, 10));
 
-      // Если пользователь не заходил сегодня, возвращаем 0
+      // Определяем начальную дату для подсчета
+      // Если есть запись за сегодня - начинаем с сегодня, иначе с вчера
+      let checkDate = new Date(today);
       if (!hasTodayLogin) {
-        console.log(`📊 User did not login today, returning 0`);
-        return 0;
+        checkDate.setDate(checkDate.getDate() - 1);
       }
 
-      // Если пользователь заходил сегодня, начинаем считать от сегодня
-      let checkDate = new Date(today);
       let consecutiveDays = 0;
 
-      console.log(`📊 Starting count from today: ${todayNormalized}`);
-
-      // Проверяем дни подряд от сегодня назад
+      // Проверяем дни подряд от начальной даты назад
       for (let i = 0; i < 365; i++) {
         // Максимум проверяем год назад
         const dateNormalized = normalizeDate(checkDate);
@@ -247,19 +241,17 @@ export class UserService {
 
         if (hasLogin) {
           consecutiveDays++;
-          console.log(`📊 Day ${consecutiveDays}: ${dateNormalized} - has login`);
           // Переходим к предыдущему дню
           checkDate.setDate(checkDate.getDate() - 1);
         } else {
           // Если пропущен день, прерываем подсчет
-          console.log(`📊 Day ${dateNormalized} - no login, stopping count`);
           break;
         }
       }
 
       // Минимальное значение - 1 день (если пользователь заходил сегодня)
-      const result = Math.max(1, consecutiveDays);
-      console.log(`📊 Consecutive login days for user ${userId}: ${result} (raw count: ${consecutiveDays})`);
+      const result = hasTodayLogin ? Math.max(1, consecutiveDays) : consecutiveDays;
+      console.log(`📊 Consecutive login days for user ${userId}: ${result} (hasToday: ${hasTodayLogin}, raw count: ${consecutiveDays})`);
       return result;
     } catch (error: any) {
       // Проверяем, является ли ошибка ошибкой отсутствия таблицы

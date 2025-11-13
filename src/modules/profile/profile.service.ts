@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { Profile } from './profile.entity';
 import { User } from '../user/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { LearningFeature } from './enums/learning-feature.enum';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()

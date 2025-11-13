@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -30,6 +31,17 @@ export class ChatController {
       success: true,
       message: 'Сообщения чата получены',
       data: messages,
+    };
+  }
+
+  @Get('user/:userId')
+  async getUserChats(@Param('userId', new ParseUUIDPipe()) userId: string) {
+    const chats = await this.chatService.getUserChats(userId);
+
+    return {
+      success: true,
+      message: 'Список чатов получен',
+      data: chats,
     };
   }
 
@@ -69,6 +81,19 @@ export class ChatController {
   @Post('message')
   async sendMessage(@Body() dto: SendMessageDto) {
     return this.processSendMessage(dto);
+  }
+
+  @Delete(':chatId')
+  async deleteChat(
+    @Param('chatId', new ParseUUIDPipe()) chatId: string,
+    @Body() body: { userId: string },
+  ) {
+    await this.chatService.deleteChat(chatId, body.userId);
+
+    return {
+      success: true,
+      message: 'Чат удален',
+    };
   }
 
   private async processSendMessage(dto: SendMessageDto) {

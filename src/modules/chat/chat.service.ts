@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import axios, { AxiosInstance } from 'axios';
 import { randomUUID } from 'crypto';
 import https from 'node:https';
@@ -200,6 +200,8 @@ export class ChatService {
   async getChatById(chatId: string): Promise<Chat> {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId },
+      relations: ['user'],
+      withDeleted: false, // Не загружаем удаленные чаты
     });
 
     if (!chat) {
@@ -207,6 +209,22 @@ export class ChatService {
     }
 
     return chat;
+  }
+
+  async deleteChat(chatId: string, userId: string): Promise<void> {
+    const chat = await this.chatRepository.findOne({
+      where: { id: chatId },
+      relations: ['user'],
+    });
+
+    if (!chat) {
+      throw new NotFoundException(`Чат с id ${chatId} не найден`);
+    }
+
+    this.assertChatBelongsToUser(chat, userId);
+
+    // Soft delete - помечаем чат как удаленный
+    await this.chatRepository.softDelete(chatId);
   }
 
   async getMessagesByChatId(chatId: string): Promise<Message[]> {
@@ -222,12 +240,62 @@ export class ChatService {
     });
   }
 
+  async getUserChats(userId: string): Promise<Chat[]> {
+    await this.getUserOrThrow(userId);
+
+    // Загружаем все чаты пользователя через QueryBuilder с явным указанием связи
+    // Исключаем удаленные чаты (soft delete)
+    const chats = await this.chatRepository
+      .createQueryBuilder('chat')
+      .innerJoin('chat.user', 'user')
+      .where('user.UserID = :userId', { userId })
+      .andWhere('chat.deletedAt IS NULL')
+      .orderBy('chat.lastMessageAt', 'DESC', 'NULLS LAST')
+      .addOrderBy('chat.createdAt', 'DESC')
+      .getMany();
+
+    // Загружаем последние сообщения для каждого чата
+    const chatIds = chats.map((chat) => chat.id);
+    if (chatIds.length > 0) {
+      // Используем QueryBuilder для загрузки последних сообщений через связь chat
+      // Загружаем связь chat для доступа к chatId
+      const allMessages = await this.messageRepository
+        .createQueryBuilder('message')
+        .innerJoinAndSelect('message.chat', 'chat')
+        .where('chat.id IN (:...chatIds)', { chatIds })
+        .orderBy('message.createdAt', 'DESC')
+        .getMany();
+
+      // Группируем сообщения по chatId, сохраняя только последнее для каждого чата
+      const messagesByChatId = new Map<string, Message>();
+      allMessages.forEach((msg) => {
+        // Используем chatId из загруженной связи
+        const msgChatId = msg.chat?.id;
+        if (msgChatId && !messagesByChatId.has(msgChatId)) {
+          messagesByChatId.set(msgChatId, msg);
+        }
+      });
+
+      // Добавляем последнее сообщение к каждому чату
+      chats.forEach((chat) => {
+        const lastMessage = messagesByChatId.get(chat.id);
+        if (lastMessage) {
+          chat.messages = [lastMessage];
+        }
+      });
+    }
+
+    return chats;
+  }
+
   private assertChatBelongsToUser(chat: Chat, userId?: string): void {
     if (!userId) {
       return;
     }
 
-    if (chat.userId !== userId) {
+    // Проверяем принадлежность через загруженную связь user или через userId
+    const chatUserId = chat.user?.UserID || chat.userId;
+    if (chatUserId !== userId) {
       throw new NotFoundException(`Чат с id ${chat.id} не найден`);
     }
   }
@@ -262,8 +330,12 @@ export class ChatService {
     dto: SendMessageDto,
   ): Promise<{ chat: Chat; isNew: boolean }> {
     if (dto.chatId) {
+      // Загружаем чат с явной загрузкой связи user для проверки принадлежности
+      // Не загружаем удаленные чаты (soft delete)
       const chat = await this.chatRepository.findOne({
         where: { id: dto.chatId },
+        relations: ['user'],
+        withDeleted: false,
       });
 
       if (!chat) {
@@ -278,6 +350,8 @@ export class ChatService {
     if (dto.conversationId) {
       const existingByConversation = await this.chatRepository.findOne({
         where: { externalConversationId: dto.conversationId },
+        relations: ['user'],
+        withDeleted: false, // Не загружаем удаленные чаты
       });
 
       if (existingByConversation) {

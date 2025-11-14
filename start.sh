@@ -1,7 +1,16 @@
 #!/bin/sh
 
-# Запуск миграций в production
-echo "🔄 Running migrations..."
+# ============================================
+# СКРИПТ ЗАПУСКА ПРИЛОЖЕНИЯ В PRODUCTION
+# ============================================
+# Этот скрипт автоматически запускается при старте Docker контейнера
+# через CMD ["/app/start.sh"] в Dockerfile.prod
+# ============================================
+
+# Шаг 1: Запуск миграций базы данных
+echo "🔄 Running database migrations..."
+echo "   Command: npm run migration:run:prod"
+echo "   Config: dist/config/typeorm.config.prod.js"
 npm run migration:run:prod || {
   echo "⚠️  Migration failed, but continuing startup..."
   echo "⚠️  Check logs above for migration errors"
@@ -10,5 +19,8 @@ npm run migration:run:prod || {
 }
 
 echo "✅ Migrations completed (or skipped)"
-echo "🚀 Starting application..."
+
+# Шаг 2: Запуск приложения
+echo "🚀 Starting NestJS application..."
+echo "   Command: npm run start:prod"
 exec npm run start:prod

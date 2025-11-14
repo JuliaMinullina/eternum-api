@@ -59,7 +59,7 @@ import { Profile } from './modules/profile/profile.entity';
         Profile,
       ],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
-      migrationsRun: true,
+      migrationsRun: false, // Миграции запускаются вручную через start.sh
       synchronize: false,
     }),
     UserModule,

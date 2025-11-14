@@ -31,6 +31,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       message = exception.message;
+      
+      // Специальная обработка ошибок подключения к базе данных
+      if (message.includes('Database connection failed') || 
+          message.includes('connect') ||
+          (exception as any)?.code === 'ECONNREFUSED' ||
+          (exception as any)?.code === 'ENOTFOUND') {
+        status = HttpStatus.SERVICE_UNAVAILABLE;
+        message = 'Database connection failed. Please ensure PostgreSQL is running.';
+      }
+    }
+
+    // Логируем ошибку для отладки
+    if (status === HttpStatus.INTERNAL_SERVER_ERROR || status === HttpStatus.SERVICE_UNAVAILABLE) {
+      console.error('❌ Error:', exception);
     }
 
     const errorResponse = {

@@ -43,13 +43,13 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Body() loginDto: LoginDto, @Response() res) {
-    console.log('🔐 Login attempt for:', loginDto.email);
+  async login(@Request() req, @Response() res) {
+    console.log('🔐 Login attempt for:', req.user?.Email || 'unknown');
 
-    const user = await this.authService.validateUser(
-      loginDto.email,
-      loginDto.password,
-    );
+    // LocalAuthGuard уже валидировал пользователя через LocalStrategy
+    // и установил req.user, поэтому просто используем его
+    const user = req.user;
+    
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }

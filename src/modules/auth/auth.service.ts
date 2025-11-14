@@ -25,12 +25,23 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userService.findByEmail(email);
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user;
-      return result;
+    try {
+      const user = await this.userService.findByEmail(email);
+      if (user && (await bcrypt.compare(password, user.password))) {
+        const { password, ...result } = user;
+        return result;
+      }
+      return null;
+    } catch (error: any) {
+      // Обработка ошибок подключения к базе данных
+      if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND' || error?.message?.includes('connect')) {
+        console.error('❌ Database connection error:', error.message);
+        throw new Error('Database connection failed. Please ensure PostgreSQL is running.');
+      }
+      // Пробрасываем другие ошибки
+      console.error('❌ Error validating user:', error);
+      throw error;
     }
-    return null;
   }
 
   async login(user: any) {

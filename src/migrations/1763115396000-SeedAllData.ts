@@ -109,35 +109,47 @@ export class SeedAllData1763115396000 implements MigrationInterface {
     `);
 
     // 4. Вставляем все темы из сгенерированного SQL файла
-    // Пытаемся найти файл в разных местах (src и dist)
-    // ВАЖНО: Файл ДОЛЖЕН быть найден, иначе миграция упадет с ошибкой
+    // ВАЖНО: После компиляции __dirname указывает на dist/migrations/
+    // Ищем файл относительно текущего местоположения скомпилированного файла
     const possiblePaths = [
+      // В dist после сборки (основной путь для продакшена)
       path.join(__dirname, 'topics-insert.sql'),
+      // В src (для разработки)
       path.join(__dirname, '../../src/migrations/topics-insert.sql'),
-      path.join(process.cwd(), 'src/migrations/topics-insert.sql'),
-      path.join(process.cwd(), 'dist/migrations/topics-insert.sql'),
-      path.join(process.cwd(), 'migrations/topics-insert.sql'),
+      // Абсолютные пути от корня проекта
+      path.resolve(process.cwd(), 'dist/migrations/topics-insert.sql'),
+      path.resolve(process.cwd(), 'src/migrations/topics-insert.sql'),
+      path.resolve(process.cwd(), 'migrations/topics-insert.sql'),
+      // Относительно текущего файла (если запускается из другого места)
+      path.resolve(__dirname, 'topics-insert.sql'),
     ];
     
     let topicsSQL: string | null = null;
     let foundPath: string | null = null;
     
+    console.log(`🔍 Ищу файл topics-insert.sql...`);
+    console.log(`📁 __dirname: ${__dirname}`);
+    console.log(`📁 process.cwd(): ${process.cwd()}`);
+    
     for (const sqlPath of possiblePaths) {
       try {
-        if (fs.existsSync(sqlPath)) {
-          topicsSQL = fs.readFileSync(sqlPath, 'utf-8');
-          foundPath = sqlPath;
-          console.log(`✅ Найден файл topics-insert.sql по пути: ${sqlPath}`);
+        const normalizedPath = path.normalize(sqlPath);
+        if (fs.existsSync(normalizedPath)) {
+          topicsSQL = fs.readFileSync(normalizedPath, 'utf-8');
+          foundPath = normalizedPath;
+          console.log(`✅ Найден файл topics-insert.sql по пути: ${normalizedPath}`);
           break;
+        } else {
+          console.log(`❌ Не найден: ${normalizedPath}`);
         }
       } catch (err) {
-        // Продолжаем поиск
+        console.log(`⚠️  Ошибка при проверке пути ${sqlPath}: ${err.message}`);
         continue;
       }
     }
 
     if (!topicsSQL) {
-      const errorMsg = `❌ КРИТИЧЕСКАЯ ОШИБКА: Файл topics-insert.sql не найден ни по одному из путей:\n${possiblePaths.join('\n')}`;
+      const errorMsg = `❌ КРИТИЧЕСКАЯ ОШИБКА: Файл topics-insert.sql не найден ни по одному из путей:\n${possiblePaths.map(p => `  - ${p}`).join('\n')}\n\nПроверьте, что файл скопирован в Docker образ!`;
       console.error(errorMsg);
       throw new Error(errorMsg);
     }

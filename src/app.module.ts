@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AdminSeedGuard } from './common/guards/admin-seed.guard';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DisciplineModule } from './modules/discipline/discipline.module';
@@ -75,7 +76,7 @@ import { Profile } from './modules/profile/profile.entity';
     ProfileModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AdminSeedGuard],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

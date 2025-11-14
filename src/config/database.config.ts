@@ -18,10 +18,11 @@ export const getDatabaseConfig = (
   migrationsRun: true, // Всегда запускать миграции
   synchronize: false, // Отключаем синхронизацию для безопасности
   logging: configService.get('NODE_ENV') !== 'production',
-  ssl:
-    configService.get('NODE_ENV') === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  // SSL only if explicitly enabled via DB_SSL env variable
+  // CapRover internal connections don't need SSL
+  ssl: configService.get('DB_SSL') === 'true' 
+    ? { rejectUnauthorized: false } 
+    : false,
   // Дополнительные настройки для Docker
   extra: {
     max: 20, // Максимальное количество соединений в пуле

@@ -17,8 +17,9 @@ export default new DataSource({
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false, // Всегда отключаем синхронизацию
   logging: configService.get('NODE_ENV') !== 'production',
-  ssl:
-    configService.get('NODE_ENV') === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  // SSL only if explicitly enabled via DB_SSL env variable
+  // CapRover internal connections don't need SSL
+  ssl: configService.get('DB_SSL') === 'true' 
+    ? { rejectUnauthorized: false } 
+    : false,
 });

@@ -1,6 +1,7 @@
 #!/bin/sh
 
-set -e  # Exit on error for better debugging
+# Disable output buffering
+set +e  # Don't exit on error, we handle it manually
 
 echo "=========================================="
 echo "🚀 STARTING APPLICATION"
@@ -96,25 +97,44 @@ echo ""
 
 echo "   Method 1: Trying TypeORM CLI (npm run migration:run:prod)..."
 echo "   Command: node_modules/.bin/typeorm migration:run -d dist/config/typeorm.config.prod.js"
+echo "   Starting at: $(date)"
+echo ""
+echo "   [MIGRATION OUTPUT START]"
 echo ""
 
-if npm run migration:run:prod 2>&1; then
-  echo ""
+# Run migration directly to see output in real-time
+npm run migration:run:prod
+MIGRATION_EXIT_CODE=$?
+
+echo ""
+echo "   [MIGRATION OUTPUT END]"
+echo "   Migration command finished at: $(date)"
+echo "   Exit code: $MIGRATION_EXIT_CODE"
+echo ""
+
+if [ $MIGRATION_EXIT_CODE -eq 0 ]; then
   echo "   ✅ SUCCESS: Migrations completed via TypeORM CLI"
 else
-  MIGRATION_EXIT_CODE=$?
-  echo ""
   echo "   ⚠️  TypeORM CLI failed with exit code: $MIGRATION_EXIT_CODE"
   echo "   Method 2: Trying Node.js script (npm run migration:run:prod:node)..."
   echo "   Command: node scripts/run-migrations.js"
+  echo "   Starting at: $(date)"
+  echo ""
+  echo "   [NODE SCRIPT OUTPUT START]"
   echo ""
   
-  if npm run migration:run:prod:node 2>&1; then
-    echo ""
+  npm run migration:run:prod:node
+  NODE_SCRIPT_EXIT_CODE=$?
+  
+  echo ""
+  echo "   [NODE SCRIPT OUTPUT END]"
+  echo "   Node.js script finished at: $(date)"
+  echo "   Exit code: $NODE_SCRIPT_EXIT_CODE"
+  echo ""
+  
+  if [ $NODE_SCRIPT_EXIT_CODE -eq 0 ]; then
     echo "   ✅ SUCCESS: Migrations completed via Node.js script"
   else
-    NODE_SCRIPT_EXIT_CODE=$?
-    echo ""
     echo "   ❌ ERROR: Both migration methods failed!"
     echo "   TypeORM CLI exit code: $MIGRATION_EXIT_CODE"
     echo "   Node.js script exit code: $NODE_SCRIPT_EXIT_CODE"

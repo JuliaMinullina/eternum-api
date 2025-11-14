@@ -18,9 +18,10 @@ module.exports = new DataSource({
   migrations: [path.join(__dirname, '../migrations/*.js')],
   synchronize: false,
   logging: process.env.NODE_ENV !== 'production',
-  ssl:
-    process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  // SSL only if explicitly enabled via DB_SSL env variable
+  // CapRover internal connections don't need SSL
+  ssl: process.env.DB_SSL === 'true' 
+    ? { rejectUnauthorized: false } 
+    : false,
 });
 

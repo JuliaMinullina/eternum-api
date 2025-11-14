@@ -51,10 +51,24 @@ export class SeedAllTopics1763124007000 implements MigrationInterface {
     await queryRunner.query(`SET session_replication_role = 'replica'`);
 
     // Читаем SQL файл с темами
-    const sqlFilePath = path.join(process.cwd(), 'src', 'migrations', 'topics-insert.sql');
+    // Пробуем разные пути: для разработки (src/) и для продакшена (dist/)
+    let sqlFilePath = path.join(process.cwd(), 'src', 'migrations', 'topics-insert.sql');
     
     if (!fs.existsSync(sqlFilePath)) {
-      console.warn(`⚠️  Файл topics-insert.sql не найден по пути: ${sqlFilePath}`);
+      // Пробуем путь для продакшена
+      sqlFilePath = path.join(process.cwd(), 'dist', 'migrations', 'topics-insert.sql');
+    }
+    
+    if (!fs.existsSync(sqlFilePath)) {
+      // Пробуем относительный путь от текущего файла миграции
+      sqlFilePath = path.join(__dirname, 'topics-insert.sql');
+    }
+    
+    if (!fs.existsSync(sqlFilePath)) {
+      console.warn(`⚠️  Файл topics-insert.sql не найден. Пробовал пути:
+        - ${path.join(process.cwd(), 'src', 'migrations', 'topics-insert.sql')}
+        - ${path.join(process.cwd(), 'dist', 'migrations', 'topics-insert.sql')}
+        - ${path.join(__dirname, 'topics-insert.sql')}`);
       await queryRunner.query(`SET session_replication_role = 'origin'`);
       return;
     }

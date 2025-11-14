@@ -26,6 +26,11 @@ RUN mkdir -p dist/migrations && \
       exit 1; \
     fi
 
+# Копируем production конфиг для миграций в dist/config/
+RUN mkdir -p dist/config && \
+    cp src/config/typeorm.config.prod.js dist/config/typeorm.config.prod.js && \
+    echo "✅ Production конфиг для миграций скопирован в dist/config/"
+
 # Production stage
 FROM node:20-alpine AS production
 
@@ -38,7 +43,7 @@ COPY package*.json ./
 # Устанавливаем только production зависимости
 RUN npm ci --only=production
 
-# Копируем собранное приложение из builder stage (включая SQL файл)
+# Копируем собранное приложение из builder stage (включая SQL файл и production конфиг)
 COPY --from=builder /app/dist ./dist
 
 # Копируем скрипт запуска

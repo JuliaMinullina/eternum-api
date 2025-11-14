@@ -16,6 +16,16 @@ COPY . .
 # Собираем приложение
 RUN npm run build
 
+# ВАЖНО: Копируем SQL файл миграции в dist/migrations/ после сборки
+RUN mkdir -p dist/migrations && \
+    if [ -f src/migrations/topics-insert.sql ]; then \
+      cp src/migrations/topics-insert.sql dist/migrations/topics-insert.sql && \
+      echo "✅ Файл topics-insert.sql скопирован в dist/migrations/"; \
+    else \
+      echo "❌ ОШИБКА: Файл src/migrations/topics-insert.sql не найден!" && \
+      exit 1; \
+    fi
+
 # Production stage
 FROM node:20-alpine AS production
 
@@ -28,7 +38,7 @@ COPY package*.json ./
 # Устанавливаем только production зависимости
 RUN npm ci --only=production
 
-# Копируем собранное приложение из builder stage
+# Копируем собранное приложение из builder stage (включая SQL файл)
 COPY --from=builder /app/dist ./dist
 
 # Копируем скрипт запуска

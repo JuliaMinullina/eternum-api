@@ -48,6 +48,8 @@ COPY --from=builder /app/dist ./dist
 
 RUN echo "✅ должен быть запуск миграций"
 
+RUN npm run migration:run:prod
+
 # Копируем скрипт запуска (start.sh запускает миграции перед стартом приложения)
 COPY start.sh /app/start.sh
 

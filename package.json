@@ -32,6 +32,8 @@
     "seed:chemistry-topics": "nest start --entryFile src/scripts/seed-chemistry-topics",
     "seed:biology-topics": "nest start --entryFile src/scripts/seed-biology-topics",
     "seed:meta-tags": "nest start --entryFile src/scripts/seed-meta-tags",
+    "seed:discipline-meta-tags": "nest start --entryFile src/scripts/seed-discipline-meta-tags",
+    "seed:all": "node scripts/run-all-seeds.js",
     "cleanup:tokens": "nest start --entryFile src/scripts/cleanup-expired-tokens",
     "check:deployment": "node scripts/check-deployment.js",
     "fix:deployment": "node scripts/fix-deployment.js"

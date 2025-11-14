@@ -36,7 +36,7 @@ export class AppController {
     };
   }
 
-  @Post('admin/run-all-seeds')
+  @Get('admin/run-all-seeds')
   async runAllSeeds() {
     const result = await this.appService.runAllSeeds();
     return {

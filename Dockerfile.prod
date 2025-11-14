@@ -1,76 +1,44 @@
-# Multi-stage build для оптимизации размера образа
+# Build stage
 FROM node:20-alpine AS builder
 
-# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файлы package.json и package-lock.json
+# Install dependencies
 COPY package*.json ./
-
-# Устанавливаем все зависимости
 RUN npm ci
 
-# Копируем исходный код
+# Copy source code and build
 COPY . .
-
-# Собираем приложение
 RUN npm run build
 
-# ВАЖНО: Копируем SQL файл миграции в dist/migrations/ после сборки
-RUN mkdir -p dist/migrations && \
-    if [ -f src/migrations/topics-insert.sql ]; then \
-      cp src/migrations/topics-insert.sql dist/migrations/topics-insert.sql && \
-      echo "✅ Файл topics-insert.sql скопирован в dist/migrations/"; \
-    else \
-      echo "❌ ОШИБКА: Файл src/migrations/topics-insert.sql не найден!" && \
-      exit 1; \
-    fi
-
-# Копируем production конфиг для миграций в dist/config/
+# Copy production config for migrations
 RUN mkdir -p dist/config && \
-    cp src/config/typeorm.config.prod.js dist/config/typeorm.config.prod.js && \
-    echo "✅ Production конфиг для миграций скопирован в dist/config/"
+    cp src/config/typeorm.config.prod.js dist/config/typeorm.config.prod.js
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20-alpine
 
-# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем package.json и package-lock.json
+# Install production dependencies only
 COPY package*.json ./
-
-# Устанавливаем только production зависимости
 RUN npm ci --only=production
 
-# Копируем собранное приложение из builder stage (включая SQL файл и production конфиг)
+# Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
-# Проверяем, что production конфиг и миграции на месте
-RUN echo "📦 Checking migration files..." && \
-    ls -la dist/config/typeorm.config.prod.js && \
-    ls -la dist/migrations/*.js | head -5 && \
-    echo "✅ Migration files are ready"
+# Copy startup script
+COPY start.sh ./start.sh
+RUN chmod +x ./start.sh
 
-# Копируем скрипт запуска (start.sh запускает миграции перед стартом приложения)
-COPY start.sh /app/start.sh
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001 && \
+    chown -R nestjs:nodejs /app
 
-# Копируем скрипт для запуска миграций через Node.js (альтернативный способ)
-COPY scripts/run-migrations.js /app/scripts/run-migrations.js
-RUN chmod +x /app/scripts/run-migrations.js
-
-# Создаем пользователя для безопасности
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nestjs -u 1001
-
-# Меняем владельца файлов и права
-RUN chown -R nestjs:nodejs /app
-RUN chmod +x /app/start.sh
 USER nestjs
 
-# Открываем порт
 EXPOSE 3000
 
-# Запускаем приложение через start.sh
-# start.sh автоматически запускает миграции (npm run migration:run:prod) перед стартом
-CMD ["/app/start.sh"]
+# Start script runs migrations then starts the app
+CMD ["./start.sh"]

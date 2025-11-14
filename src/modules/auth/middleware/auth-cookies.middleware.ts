@@ -23,11 +23,14 @@ export class AuthCookiesMiddleware implements NestMiddleware {
             responseData.refresh_token ? 'PRESENT' : 'NOT FOUND',
           );
 
+          // Определяем, находимся ли мы в продакшене
+          const isProduction = process.env.NODE_ENV === 'production';
+          
           // Устанавливаем access token в httpOnly cookie
           res.cookie('access_token', responseData.access_token, {
             httpOnly: true,
-            secure: false, // false для development
-            sameSite: 'lax',
+            secure: isProduction, // true для HTTPS в продакшене, false для development
+            sameSite: isProduction ? 'none' : 'lax', // 'none' для cross-site в продакшене
             maxAge: (responseData.expires_in || 24 * 60 * 60) * 1000, // 24 часа по умолчанию
             path: '/',
           });
@@ -36,8 +39,8 @@ export class AuthCookiesMiddleware implements NestMiddleware {
           if (responseData.refresh_token) {
             res.cookie('refresh_token', responseData.refresh_token, {
               httpOnly: true,
-              secure: false, // false для development
-              sameSite: 'lax',
+              secure: isProduction, // true для HTTPS в продакшене, false для development
+              sameSite: isProduction ? 'none' : 'lax', // 'none' для cross-site в продакшене
               maxAge: 72 * 60 * 60 * 1000, // 72 часа
               path: '/',
             });

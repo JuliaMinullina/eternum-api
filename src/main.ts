@@ -12,13 +12,27 @@ async function bootstrap() {
     // Подключаем cookie-parser
     app.use(cookieParser());
 
-    // Настройка CORS: разрешить все домены (отражаем Origin) с поддержкой credentials
-    app.enableCors({
-      origin: true,
+    // Настройка CORS с поддержкой переменной окружения для продакшена
+    const corsOrigin = process.env.CORS_ORIGIN;
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // В продакшене используем переменную окружения, в development разрешаем все
+    const corsOptions = {
+      origin: isProduction && corsOrigin 
+        ? corsOrigin.split(',').map(origin => origin.trim())
+        : true, // В development разрешаем все домены
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
       credentials: true,
+    };
+    
+    console.log('🌐 CORS configuration:', {
+      isProduction,
+      corsOrigin: corsOrigin || 'not set (allowing all)',
+      origin: corsOptions.origin,
     });
+    
+    app.enableCors(corsOptions);
 
   // Убираем глобальный префикс для совместимости с фронтендом
   // app.setGlobalPrefix('api');

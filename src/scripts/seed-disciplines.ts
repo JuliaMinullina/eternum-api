@@ -56,7 +56,7 @@ const disciplinesData = [
   {
     DisciplineID: 'a8c7e6d5-1b4d-4e0f-9a3c-5d4e6f7a8b9c',
     ID: 8,
-    DisciplineName: 'История',
+    DisciplineName: 'Мировая история',
     CreatedAt: new Date('2025-08-16T12:00:00Z'),
     UpdatedAt: new Date('2025-08-16T12:00:00Z'),
   },
@@ -158,6 +158,69 @@ const disciplinesData = [
     CreatedAt: new Date('2025-08-16T12:00:00Z'),
     UpdatedAt: new Date('2025-08-16T12:00:00Z'),
   },
+  {
+    DisciplineID: 'a3b2c1d0-6e9a-4795-8c0a-0d1e2f3a4b5c',
+    ID: 23,
+    DisciplineName: 'Иностранный язык — Испанский',
+    CreatedAt: new Date('2025-08-16T12:00:00Z'),
+    UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+  },
+  {
+    DisciplineID: 'b4c3d2e1-7f0b-4806-9d1b-1e2f3a4b5c6d',
+    ID: 24,
+    DisciplineName: 'Иностранный язык — Китайский',
+    CreatedAt: new Date('2025-08-16T12:00:00Z'),
+    UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+  },
+  {
+    DisciplineID: 'c5d4e3f2-8a1c-4917-0e2c-2f3a4b5c6d7e',
+    ID: 25,
+    DisciplineName: 'Иностранный язык — Арабский',
+    CreatedAt: new Date('2025-08-16T12:00:00Z'),
+    UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+  },
+  {
+    DisciplineID: 'd6e5f4a3-9b2d-5028-1f3d-3a4b5c6d7e8f',
+    ID: 26,
+    DisciplineName: 'Мировая художественная культура',
+    CreatedAt: new Date('2025-08-16T12:00:00Z'),
+    UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+  },
+  {
+    DisciplineID: 'e7f6a5b4-0c3e-5139-2a4e-4b5c6d7e8f9a',
+    ID: 27,
+    DisciplineName: 'Культурология',
+    CreatedAt: new Date('2025-08-16T12:00:00Z'),
+    UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+  },
+  {
+    DisciplineID: 'f8a7b6c5-1d4f-5240-3b5f-5c6d7e8f9a0b',
+    ID: 28,
+    DisciplineName: 'Философия',
+    CreatedAt: new Date('2025-08-16T12:00:00Z'),
+    UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+  },
+  {
+    DisciplineID: 'a9b8c7d6-2e5a-5351-4c6a-6d7e8f9a0b1c',
+    ID: 29,
+    DisciplineName: 'Общая психология',
+    CreatedAt: new Date('2025-08-16T12:00:00Z'),
+    UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+  },
+  {
+    DisciplineID: 'b0c9d8e7-3f6b-5462-5d7b-7e8f9a0b1c2d',
+    ID: 30,
+    DisciplineName: 'Математический анализ',
+    CreatedAt: new Date('2025-08-16T12:00:00Z'),
+    UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+  },
+  {
+    DisciplineID: '6ae0d6b5-5e59-41c6-b507-7e08c9ee156c',
+    ID: 32,
+    DisciplineName: 'История России',
+    CreatedAt: new Date('2025-08-16T12:00:00Z'),
+    UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+  },
 ];
 
 async function bootstrap() {
@@ -168,22 +231,33 @@ async function bootstrap() {
 
     console.log('🌱 Начинаю заполнение дисциплин...');
 
-    // Проверяем, есть ли уже дисциплины в базе
-    const existingCount = await disciplineRepository.count();
-    if (existingCount > 0) {
-      console.log(
-        `⚠️  В базе уже есть ${existingCount} дисциплин. Очищаю таблицу...`,
-      );
-      await disciplineRepository.clear();
+    // Получаем существующие дисциплины
+    const existingDisciplines = await disciplineRepository.find();
+    const existingIds = new Set(existingDisciplines.map(d => d.ID));
+    const existingNames = new Set(existingDisciplines.map(d => d.DisciplineName));
+
+    // Фильтруем только новые дисциплины
+    const newDisciplines = disciplinesData.filter(
+      d => !existingIds.has(d.ID) && !existingNames.has(d.DisciplineName)
+    );
+
+    if (newDisciplines.length === 0) {
+      console.log('✅ Все дисциплины уже существуют в базе данных.');
+      return;
     }
 
-    // Создаем дисциплины
-    const createdDisciplines = await disciplineRepository.save(disciplinesData);
+    console.log(`📝 Найдено ${newDisciplines.length} новых дисциплин для добавления:`);
+    newDisciplines.forEach((d) => {
+      console.log(`   - ${d.DisciplineName} (ID: ${d.ID})`);
+    });
 
-    console.log(`✅ Успешно создано ${createdDisciplines.length} дисциплин:`);
+    // Создаем только новые дисциплины
+    const createdDisciplines = await disciplineRepository.save(newDisciplines);
+
+    console.log(`\n✅ Успешно создано ${createdDisciplines.length} новых дисциплин:`);
     createdDisciplines.forEach((discipline) => {
       console.log(
-        `   - ${discipline.DisciplineName} (${discipline.DisciplineID})`,
+        `   - ${discipline.DisciplineName} (ID: ${discipline.ID})`,
       );
     });
 

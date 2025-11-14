@@ -13,8 +13,16 @@ const metaTagsData = [
   { MetaTagCode: 'EARTH_SPACE_ENV', MetaTagName: 'Науки о Земле и космосе' },
   { MetaTagCode: 'SOCIAL_SCIENCES', MetaTagName: 'Социальные науки' },
   { MetaTagCode: 'HUMANITIES', MetaTagName: 'Гуманитарные науки' },
+  {
+    MetaTagCode: 'HUMANITIES_HISTORY',
+    MetaTagName: 'Гуманитарные науки и история',
+  },
   { MetaTagCode: 'LANGUAGES', MetaTagName: 'Языки' },
   { MetaTagCode: 'LITERATURE', MetaTagName: 'Литература' },
+  {
+    MetaTagCode: 'LANGUAGES_LITERATURE',
+    MetaTagName: 'Языки и литература',
+  },
   { MetaTagCode: 'ARTS', MetaTagName: 'Искусство' },
   {
     MetaTagCode: 'HEALTH_SAFETY_PE',
@@ -65,19 +73,26 @@ async function bootstrap() {
 
     console.log('🌱 Начинаю заполнение мета-тегов...');
 
-    // Проверяем, есть ли уже мета-теги
+    // Проверяем, какие мета-теги уже существуют
     const existingMetaTags = await metaTagRepository.find();
-    if (existingMetaTags.length > 0) {
-      console.log('⚠️  Мета-теги уже существуют. Пропускаю создание...');
-    } else {
-      // Создаем мета-теги только если их нет
-      const createdMetaTags = await metaTagRepository.save(metaTagsData);
-      console.log(`✅ Успешно создано ${createdMetaTags.length} мета-тегов:`);
-      createdMetaTags.forEach((metaTag, index) => {
-        console.log(
-          `   ${index + 1}. ${metaTag.MetaTagName} (${metaTag.MetaTagCode})`,
-        );
+    const existingCodes = new Set(existingMetaTags.map(mt => mt.MetaTagCode));
+    
+    // Фильтруем только новые мета-теги
+    const newMetaTags = metaTagsData.filter(
+      mt => !existingCodes.has(mt.MetaTagCode)
+    );
+
+    if (newMetaTags.length > 0) {
+      console.log(`📝 Найдено ${newMetaTags.length} новых мета-тегов для добавления:`);
+      newMetaTags.forEach((mt) => {
+        console.log(`   - ${mt.MetaTagName} (${mt.MetaTagCode})`);
       });
+      
+      // Создаем только новые мета-теги
+      const createdMetaTags = await metaTagRepository.save(newMetaTags);
+      console.log(`✅ Успешно создано ${createdMetaTags.length} новых мета-тегов`);
+    } else {
+      console.log('✅ Все мета-теги уже существуют в базе данных.');
     }
 
     console.log('\n🔗 Создаю связи дисциплин с мета-тегами...');

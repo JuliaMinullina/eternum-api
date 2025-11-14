@@ -15,7 +15,8 @@ const disciplineToMetaTagData = [
   { DisciplineName: 'География', MetaTagCode: 'EARTH_SPACE_ENV' },
   { DisciplineName: 'Астрономия', MetaTagCode: 'EARTH_SPACE_ENV' },
   { DisciplineName: 'Экология', MetaTagCode: 'EARTH_SPACE_ENV' },
-  { DisciplineName: 'История', MetaTagCode: 'HUMANITIES_HISTORY' },
+  { DisciplineName: 'Мировая история', MetaTagCode: 'HUMANITIES_HISTORY' },
+  { DisciplineName: 'История России', MetaTagCode: 'HUMANITIES_HISTORY' },
   { DisciplineName: 'Обществознание', MetaTagCode: 'SOCIAL_SCIENCES' },
   { DisciplineName: 'Экономика', MetaTagCode: 'SOCIAL_SCIENCES' },
   { DisciplineName: 'Право', MetaTagCode: 'SOCIAL_SCIENCES' },
@@ -33,13 +34,33 @@ const disciplineToMetaTagData = [
     DisciplineName: 'Иностранный язык — Французский',
     MetaTagCode: 'LANGUAGES_LITERATURE',
   },
+  {
+    DisciplineName: 'Иностранный язык — Испанский',
+    MetaTagCode: 'LANGUAGES_LITERATURE',
+  },
+  {
+    DisciplineName: 'Иностранный язык — Китайский',
+    MetaTagCode: 'LANGUAGES_LITERATURE',
+  },
+  {
+    DisciplineName: 'Иностранный язык — Арабский',
+    MetaTagCode: 'LANGUAGES_LITERATURE',
+  },
   { DisciplineName: 'Изобразительное искусство', MetaTagCode: 'ARTS' },
   { DisciplineName: 'Музыка', MetaTagCode: 'ARTS' },
+  {
+    DisciplineName: 'Мировая художественная культура',
+    MetaTagCode: 'ARTS',
+  },
   { DisciplineName: 'Физическая культура', MetaTagCode: 'HEALTH_SAFETY_PE' },
   {
     DisciplineName: 'Основы безопасности жизнедеятельности',
     MetaTagCode: 'HEALTH_SAFETY_PE',
   },
+  { DisciplineName: 'Культурология', MetaTagCode: 'HUMANITIES_HISTORY' },
+  { DisciplineName: 'Философия', MetaTagCode: 'HUMANITIES_HISTORY' },
+  { DisciplineName: 'Общая психология', MetaTagCode: 'SOCIAL_SCIENCES' },
+  { DisciplineName: 'Математический анализ', MetaTagCode: 'MATH_STATS' },
 ];
 
 async function bootstrap() {
@@ -54,19 +75,21 @@ async function bootstrap() {
 
     console.log('🏷️  Начинаю связывание дисциплин с метатегами...');
 
-    // Проверяем, есть ли уже связи в базе
-    const existingCount = await disciplineMetaTagRepository.count();
-    if (existingCount > 0) {
-      console.log(
-        `⚠️  В базе уже есть ${existingCount} связей. Очищаю таблицу...`,
-      );
-      await disciplineMetaTagRepository.clear();
-    }
+    // Получаем существующие связи
+    const existingRelations = await disciplineMetaTagRepository.find();
+    const existingRelationKeys = new Set(
+      existingRelations.map(r => `${r.DisciplineID}-${r.MetaTagCode}`)
+    );
 
     const createdRelations: Array<{
       disciplineName: string;
       metaTagCode: string;
       metaTagName: string;
+    }> = [];
+
+    const skippedRelations: Array<{
+      disciplineName: string;
+      metaTagCode: string;
     }> = [];
 
     for (const relation of disciplineToMetaTagData) {
@@ -90,6 +113,16 @@ async function bootstrap() {
         continue;
       }
 
+      // Проверяем, существует ли уже такая связь
+      const relationKey = `${discipline.DisciplineID}-${relation.MetaTagCode}`;
+      if (existingRelationKeys.has(relationKey)) {
+        skippedRelations.push({
+          disciplineName: relation.DisciplineName,
+          metaTagCode: relation.MetaTagCode,
+        });
+        continue;
+      }
+
       // Создаем связь
       const disciplineMetaTag = disciplineMetaTagRepository.create({
         DisciplineID: discipline.DisciplineID,
@@ -107,6 +140,10 @@ async function bootstrap() {
       console.log(
         `✅ Связал: "${relation.DisciplineName}" → "${metaTag.MetaTagName}"`,
       );
+    }
+
+    if (skippedRelations.length > 0) {
+      console.log(`\n⏭️  Пропущено ${skippedRelations.length} существующих связей`);
     }
 
     console.log(

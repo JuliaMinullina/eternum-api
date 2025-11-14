@@ -15,6 +15,9 @@ export class DisciplineService {
   async findAll(): Promise<Discipline[]> {
     return this.disciplineRepository.find({
       relations: ['disciplineMetaTags', 'disciplineMetaTags.metaTag'],
+      order: {
+        ID: 'ASC',
+      },
     });
   }
 

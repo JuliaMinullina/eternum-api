@@ -68,10 +68,21 @@ export class AppService {
       try {
         this.logger.log(`📦 Запуск: ${seed.name}...`);
         
-        // Используем nest start --entryFile, как в package.json
-        // Это работает как в development, так и в production
-        const entryFile = seed.file.replace('.ts', ''); // Убираем расширение .ts
-        const command = `nest start --entryFile ${entryFile}`;
+        // Определяем, в production или development окружении
+        const isProduction = process.env.NODE_ENV === 'production';
+        
+        let command: string;
+        
+        if (isProduction) {
+          // В production используем скомпилированные .js файлы из dist/
+          const compiledFile = seed.file.replace('src/', 'dist/').replace('.ts', '.js');
+          command = `node ${compiledFile}`;
+        } else {
+          // В development используем ts-node для запуска .ts файлов
+          command = `npx ts-node ${seed.file}`;
+        }
+        
+        this.logger.debug(`Выполняю команду: ${command}`);
         
         const output = execSync(command, {
           cwd: projectRoot,

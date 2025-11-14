@@ -16,6 +16,9 @@ COPY . .
 # Собираем приложение
 RUN npm run build
 
+# ВАЖНО: После сборки копируем SQL файл в dist/migrations/ чтобы он был доступен при выполнении миграций
+RUN mkdir -p dist/migrations && cp src/migrations/topics-insert.sql dist/migrations/topics-insert.sql || (echo "⚠️  Файл topics-insert.sql не найден, но продолжаем сборку" && exit 0)
+
 # Удаляем devDependencies для уменьшения размера образа
 RUN npm prune --production
 

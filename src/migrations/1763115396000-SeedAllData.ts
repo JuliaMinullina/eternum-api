@@ -110,43 +110,61 @@ export class SeedAllData1763115396000 implements MigrationInterface {
 
     // 4. Вставляем все темы из сгенерированного SQL файла
     // Пытаемся найти файл в разных местах (src и dist)
+    // ВАЖНО: Файл ДОЛЖЕН быть найден, иначе миграция упадет с ошибкой
     const possiblePaths = [
       path.join(__dirname, 'topics-insert.sql'),
       path.join(__dirname, '../../src/migrations/topics-insert.sql'),
       path.join(process.cwd(), 'src/migrations/topics-insert.sql'),
+      path.join(process.cwd(), 'dist/migrations/topics-insert.sql'),
+      path.join(process.cwd(), 'migrations/topics-insert.sql'),
     ];
     
     let topicsSQL: string | null = null;
+    let foundPath: string | null = null;
+    
     for (const sqlPath of possiblePaths) {
-      if (fs.existsSync(sqlPath)) {
-        topicsSQL = fs.readFileSync(sqlPath, 'utf-8');
-        break;
+      try {
+        if (fs.existsSync(sqlPath)) {
+          topicsSQL = fs.readFileSync(sqlPath, 'utf-8');
+          foundPath = sqlPath;
+          console.log(`✅ Найден файл topics-insert.sql по пути: ${sqlPath}`);
+          break;
+        }
+      } catch (err) {
+        // Продолжаем поиск
+        continue;
       }
     }
 
-    if (topicsSQL) {
-      // Выполняем весь SQL файл целиком (он уже содержит ON CONFLICT DO NOTHING)
-      // Удаляем комментарии и лишние пробелы
-      const cleanedSQL = topicsSQL
-        .split('\n')
-        .filter(line => !line.trim().startsWith('--'))
-        .join('\n')
-        .trim();
-      
-      if (cleanedSQL) {
-        try {
-          await queryRunner.query(cleanedSQL);
-        } catch (error) {
-          // Игнорируем ошибки дублирования (ON CONFLICT DO NOTHING уже обрабатывает это)
-          if (!error.message?.includes('duplicate key') && !error.message?.includes('already exists')) {
-            console.warn(`⚠️  Ошибка при выполнении SQL тем: ${error.message}`);
-            throw error; // Пробрасываем ошибку дальше, если это не дубликат
-          }
-        }
+    if (!topicsSQL) {
+      const errorMsg = `❌ КРИТИЧЕСКАЯ ОШИБКА: Файл topics-insert.sql не найден ни по одному из путей:\n${possiblePaths.join('\n')}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    // Выполняем весь SQL файл целиком (он уже содержит ON CONFLICT DO NOTHING)
+    // Удаляем комментарии и лишние пробелы
+    const cleanedSQL = topicsSQL
+      .split('\n')
+      .filter(line => !line.trim().startsWith('--'))
+      .join('\n')
+      .trim();
+    
+    if (!cleanedSQL) {
+      throw new Error('❌ SQL файл пуст после очистки комментариев');
+    }
+
+    try {
+      await queryRunner.query(cleanedSQL);
+      console.log('✅ Темы успешно добавлены через миграцию');
+    } catch (error) {
+      // Игнорируем ошибки дублирования (ON CONFLICT DO NOTHING уже обрабатывает это)
+      if (error.message?.includes('duplicate key') || error.message?.includes('already exists')) {
+        console.log('ℹ️  Некоторые темы уже существуют (это нормально при повторном запуске миграции)');
+      } else {
+        console.error(`❌ Ошибка при выполнении SQL тем: ${error.message}`);
+        throw error; // Пробрасываем ошибку дальше, если это не дубликат
       }
-    } else {
-      console.warn('⚠️  Файл topics-insert.sql не найден. Темы не будут добавлены через миграцию.');
-      console.warn('⚠️  Проверьте, что файл topics-insert.sql находится в src/migrations/');
     }
 
     // 5. Обновляем последовательности для ID полей (только если они существуют)

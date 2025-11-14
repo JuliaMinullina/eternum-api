@@ -4,10 +4,20 @@ export class AddDeletedAtToChats1763031636000 implements MigrationInterface {
   name = 'AddDeletedAtToChats1763031636000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
-      ALTER TABLE "chats" 
-      ADD COLUMN "deletedAt" TIMESTAMP NULL
+    // Проверяем существование колонки перед добавлением
+    const columnExists = await queryRunner.query(`
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_schema = 'public' 
+      AND table_name = 'chats' 
+      AND column_name = 'deletedAt'
     `);
+
+    if (!Array.isArray(columnExists) || columnExists.length === 0) {
+      await queryRunner.query(`
+        ALTER TABLE "chats" 
+        ADD COLUMN "deletedAt" TIMESTAMP NULL
+      `);
+    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

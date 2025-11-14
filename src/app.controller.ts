@@ -36,15 +36,15 @@ export class AppController {
     };
   }
 
-  @Get('admin/run-all-seeds')
-  async runAllSeeds() {
-    const result = await this.appService.runAllSeeds();
-    return {
-      success: result.success,
-      message: result.success 
-        ? 'All seeds executed successfully' 
-        : 'Some seeds failed',
-      data: result,
-    };
-  }
+  // @Get('admin/run-all-seeds')
+  // async runAllSeeds() {
+  //   const result = await this.appService.runAllSeeds();
+  //   return {
+  //     success: result.success,
+  //     message: result.success 
+  //       ? 'All seeds executed successfully' 
+  //       : 'Some seeds failed',
+  //     data: result,
+  //   };
+  // }
 }

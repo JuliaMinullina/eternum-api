@@ -6,7 +6,7 @@ export class CreateProfilesTable1763022824000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Создание таблицы профилей
     await queryRunner.query(`
-      CREATE TABLE "profiles" (
+      CREATE TABLE IF NOT EXISTS "profiles" (
         "ProfileID" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "ID" SERIAL NOT NULL,
         "UserID" uuid NOT NULL,
@@ -22,7 +22,7 @@ export class CreateProfilesTable1763022824000 implements MigrationInterface {
 
     // Создание индекса для быстрого поиска по UserID
     await queryRunner.query(`
-      CREATE INDEX "IDX_profiles_UserID" 
+      CREATE INDEX IF NOT EXISTS "IDX_profiles_UserID" 
       ON "profiles" ("UserID")
     `);
   }

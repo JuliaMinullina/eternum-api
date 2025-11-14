@@ -6,7 +6,7 @@ export class CreateUserDailyLogins1755800000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Создание таблицы для отслеживания ежедневных входов пользователей
     await queryRunner.query(`
-      CREATE TABLE "user_daily_logins" (
+      CREATE TABLE IF NOT EXISTS "user_daily_logins" (
         "UserDailyLoginID" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "ID" SERIAL NOT NULL,
         "UserID" uuid NOT NULL,
@@ -22,7 +22,7 @@ export class CreateUserDailyLogins1755800000000 implements MigrationInterface {
 
     // Создание индекса для быстрого поиска по UserID и LoginDate
     await queryRunner.query(`
-      CREATE INDEX "IDX_user_daily_logins_UserID_LoginDate" 
+      CREATE INDEX IF NOT EXISTS "IDX_user_daily_logins_UserID_LoginDate" 
       ON "user_daily_logins" ("UserID", "LoginDate")
     `);
   }

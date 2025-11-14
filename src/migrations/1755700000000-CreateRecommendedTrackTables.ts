@@ -6,9 +6,9 @@ export class CreateRecommendedTrackTables1755700000000
   name = 'CreateRecommendedTrackTables1755700000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Создаем таблицу recommended_tracks
+    // Создаем таблицу recommended_tracks, если она не существует
     await queryRunner.query(`
-      CREATE TABLE "recommended_tracks" (
+      CREATE TABLE IF NOT EXISTS "recommended_tracks" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "chatId" uuid NOT NULL,
         "userId" uuid NOT NULL,
@@ -24,16 +24,16 @@ export class CreateRecommendedTrackTables1755700000000
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_recommended_tracks_chatId" ON "recommended_tracks" ("chatId")
+      CREATE INDEX IF NOT EXISTS "IDX_recommended_tracks_chatId" ON "recommended_tracks" ("chatId")
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_recommended_tracks_userId" ON "recommended_tracks" ("userId")
+      CREATE INDEX IF NOT EXISTS "IDX_recommended_tracks_userId" ON "recommended_tracks" ("userId")
     `);
 
-    // Создаем таблицу track_items
+    // Создаем таблицу track_items, если она не существует
     await queryRunner.query(`
-      CREATE TABLE "track_items" (
+      CREATE TABLE IF NOT EXISTS "track_items" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "trackId" uuid NOT NULL,
         "disciplineId" uuid NOT NULL,
@@ -48,21 +48,21 @@ export class CreateRecommendedTrackTables1755700000000
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_track_items_trackId" ON "track_items" ("trackId")
+      CREATE INDEX IF NOT EXISTS "IDX_track_items_trackId" ON "track_items" ("trackId")
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_track_items_disciplineId" ON "track_items" ("disciplineId")
+      CREATE INDEX IF NOT EXISTS "IDX_track_items_disciplineId" ON "track_items" ("disciplineId")
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_track_items_topicId" ON "track_items" ("topicId")
+      CREATE INDEX IF NOT EXISTS "IDX_track_items_topicId" ON "track_items" ("topicId")
     `);
 
     // Создаем уникальный индекс для комбинации trackId, disciplineId, topicId
     // В PostgreSQL NULL значения в уникальном индексе обрабатываются корректно
     await queryRunner.query(`
-      CREATE UNIQUE INDEX "IDX_track_items_unique" ON "track_items" ("trackId", "disciplineId", "topicId")
+      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_track_items_unique" ON "track_items" ("trackId", "disciplineId", "topicId")
     `);
   }
 

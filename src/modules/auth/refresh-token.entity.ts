@@ -5,6 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
+  Generated,
 } from 'typeorm';
 import { User } from '../user/user.entity';
 
@@ -13,7 +14,8 @@ export class RefreshToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'int', unique: true })
+  @Generated('increment')
   ID: number;
 
   @Column()

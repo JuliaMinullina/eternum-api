@@ -1,12 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateDisciplineMetaTagsIfNotExists1763137000000
+export class CreateDisciplineMetaTagsIfNotExists1763124000000
   implements MigrationInterface
 {
-  name = 'CreateDisciplineMetaTagsIfNotExists1763137000000';
+  name = 'CreateDisciplineMetaTagsIfNotExists1763124000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Проверяем существование таблицы
     const tableExists = await queryRunner.query(`
       SELECT 1 FROM information_schema.tables 
       WHERE table_schema = 'public' AND table_name = 'discipline_meta_tags'
@@ -19,7 +18,6 @@ export class CreateDisciplineMetaTagsIfNotExists1763137000000
 
     console.log('📦 Создание таблицы discipline_meta_tags...');
 
-    // Создание таблицы связи дисциплин и мета-тегов
     await queryRunner.query(`
       CREATE TABLE "discipline_meta_tags" (
         "DisciplineID" uuid NOT NULL,
@@ -29,7 +27,6 @@ export class CreateDisciplineMetaTagsIfNotExists1763137000000
       )
     `);
 
-    // Проверяем, существует ли поле ID (может быть добавлено в более поздних миграциях)
     const idColumnExists = await queryRunner.query(`
       SELECT 1 FROM information_schema.columns 
       WHERE table_schema = 'public' 
@@ -47,7 +44,6 @@ export class CreateDisciplineMetaTagsIfNotExists1763137000000
       );
     }
 
-    // Создание внешних ключей (если их еще нет)
     const fkDisciplineExists = await queryRunner.query(`
       SELECT 1 FROM information_schema.table_constraints 
       WHERE table_schema = 'public' 
@@ -90,7 +86,6 @@ export class CreateDisciplineMetaTagsIfNotExists1763137000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Удаляем внешние ключи
     await queryRunner.query(`
       ALTER TABLE "discipline_meta_tags" 
       DROP CONSTRAINT IF EXISTS "FK_discipline_meta_tags_meta_tag"
@@ -100,8 +95,8 @@ export class CreateDisciplineMetaTagsIfNotExists1763137000000
       DROP CONSTRAINT IF EXISTS "FK_discipline_meta_tags_discipline"
     `);
 
-    // Удаляем таблицу
     await queryRunner.query(`DROP TABLE IF EXISTS "discipline_meta_tags"`);
   }
 }
+
 

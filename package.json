@@ -22,7 +22,7 @@
     "typeorm:prod": "node_modules/.bin/typeorm",
     "migration:generate": "npm run typeorm migration:generate -- -d src/config/typeorm.config.ts",
     "migration:run": "npm run typeorm migration:run -- -d src/config/typeorm.config.ts",
-    "migration:run:prod": "node_modules/.bin/typeorm migration:run -d dist/config/typeorm.config.prod.js",
+    "migration:run:prod": "node_modules/.bin/typeorm migration:run -d dist/config/typeorm.config.js",
     "migration:run:prod:node": "node scripts/run-migrations.js",
     "migration:revert": "npm run typeorm migration:revert -- -d src/config/typeorm.config.ts",
     "migration:revert:prod": "node_modules/.bin/typeorm migration:revert -d dist/config/typeorm.config.prod.js",

@@ -1,45 +1,50 @@
-# Build stage
+# Multi-stage build для оптимизации размера образа
 FROM node:20-alpine AS builder
 
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Install dependencies
+# Копируем файлы package.json и package-lock.json
 COPY package*.json ./
+
+# Устанавливаем все зависимости
 RUN npm ci
 
-# Copy source code and build
+# Копируем исходный код
 COPY . .
+
+# Собираем приложение
 RUN npm run build
 
-# Copy production config for migrations
-RUN mkdir -p dist/config && \
-    cp src/config/typeorm.config.prod.js dist/config/typeorm.config.prod.js
-
 # Production stage
-FROM node:20-alpine
+FROM node:20-alpine AS production
 
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Install production dependencies only
+# Копируем package.json и package-lock.json
 COPY package*.json ./
+
+# Устанавливаем только production зависимости
 RUN npm ci --only=production
 
-# Copy built application from builder
+# Копируем собранное приложение из builder stage
 COPY --from=builder /app/dist ./dist
 
-# Copy startup script and migration script
-COPY start.sh ./start.sh
-COPY scripts/run-migrations.js ./scripts/run-migrations.js
-RUN chmod +x ./start.sh ./scripts/run-migrations.js
+# Копируем скрипт запуска
+COPY start.sh /app/start.sh
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001 && \
-    chown -R nestjs:nodejs /app
+# Создаем пользователя для безопасности
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nestjs -u 1001
 
+# Меняем владельца файлов и права
+RUN chown -R nestjs:nodejs /app
+RUN chmod +x /app/start.sh
 USER nestjs
 
+# Открываем порт
 EXPOSE 3000
 
-# Start script runs migrations then starts the app
-CMD ["./start.sh"]
+# Запускаем приложение
+CMD ["/app/start.sh"]

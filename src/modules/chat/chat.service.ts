@@ -117,15 +117,20 @@ export class ChatService {
   async createChat(dto: CreateChatDto): Promise<Chat> {
     const user = await this.getUserOrThrow(dto.userId);
 
+    const context = dto.context ?? 'general';
+    console.log(`[ChatService] createChat - userId: ${dto.userId}, context from dto: ${dto.context}, final context: ${context}`);
+
     const chat = this.chatRepository.create({
       user,
       title: this.deriveTitle(dto.title),
+      context: context,
     });
 
     const savedChat = await this.chatRepository.save(chat);
     savedChat.user = user;
     savedChat.userId = user.UserID;
 
+    console.log(`[ChatService] createChat - created chat:`, { id: savedChat.id, context: savedChat.context });
     return savedChat;
   }
 
@@ -240,16 +245,38 @@ export class ChatService {
     });
   }
 
-  async getUserChats(userId: string): Promise<Chat[]> {
+  async getUserChats(userId: string, context?: string | null): Promise<Chat[]> {
     await this.getUserOrThrow(userId);
 
     // Загружаем все чаты пользователя через QueryBuilder с явным указанием связи
     // Исключаем удаленные чаты (soft delete)
-    const chats = await this.chatRepository
+    const queryBuilder = this.chatRepository
       .createQueryBuilder('chat')
       .innerJoin('chat.user', 'user')
       .where('user.UserID = :userId', { userId })
-      .andWhere('chat.deletedAt IS NULL')
+      .andWhere('chat.deletedAt IS NULL');
+
+    // Фильтруем по context:
+    // - Если context передан, показываем только чаты с этим контекстом
+    // - Если context === null (явно), показываем только обычные чаты (context = 'general')
+    // - Если context не передан, показываем все чаты
+    console.log(`[ChatService] getUserChats - userId: ${userId}, context: ${context}, context type: ${typeof context}`);
+    if (context !== undefined) {
+      if (context === null) {
+        // Показываем только обычные чаты (context = 'general')
+        // Исключаем чаты с другими контекстами (например, 'lesson')
+        console.log(`[ChatService] Filtering for context = 'general'`);
+        queryBuilder.andWhere('chat.context = :defaultContext', { defaultContext: 'general' });
+      } else {
+        // Показываем только чаты с конкретным контекстом (строгое совпадение)
+        console.log(`[ChatService] Filtering for context = '${context}'`);
+        queryBuilder.andWhere('chat.context = :context', { context });
+      }
+    } else {
+      console.log(`[ChatService] No context filter - showing all chats`);
+    }
+
+    const chats = await queryBuilder
       .orderBy('chat.lastMessageAt', 'DESC', 'NULLS LAST')
       .addOrderBy('chat.createdAt', 'DESC')
       .getMany();

@@ -34,6 +34,9 @@ export class Chat {
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true, default: null })
   externalConversationId: string | null;
 
+  @Column({ type: 'varchar', length: 50, nullable: true, default: 'general' })
+  context: string | null;
+
   @Column({ type: 'timestamptz', nullable: true, default: null })
   lastMessageAt: Date | null;
 

@@ -8,4 +8,9 @@ export class CreateChatDto {
   @IsString()
   @MaxLength(255)
   title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  context?: string;
 }

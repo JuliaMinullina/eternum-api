@@ -6,6 +6,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
@@ -35,8 +36,16 @@ export class ChatController {
   }
 
   @Get('user/:userId')
-  async getUserChats(@Param('userId', new ParseUUIDPipe()) userId: string) {
-    const chats = await this.chatService.getUserChats(userId);
+  async getUserChats(
+    @Param('userId', new ParseUUIDPipe()) userId: string,
+    @Query('context') context?: string,
+  ) {
+    // Если context === 'null' (строка), преобразуем в null для обычных чатов
+    // Если context не передан, показываем все чаты
+    const contextFilter = context === 'null' ? null : context;
+    console.log(`[ChatController] getUserChats - userId: ${userId}, context query: ${context}, contextFilter: ${contextFilter}`);
+    const chats = await this.chatService.getUserChats(userId, contextFilter);
+    console.log(`[ChatController] getUserChats - returned ${chats.length} chats with contexts:`, chats.map(c => ({ id: c.id, context: c.context })));
 
     return {
       success: true,

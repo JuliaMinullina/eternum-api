@@ -94,10 +94,33 @@ export class DisciplineController {
     timestamp: string;
   }> {
     const discipline = await this.disciplineService.findOne(id);
+    
+    // Явная сериализация для сохранения метатегов
+    const serializedDiscipline = {
+      DisciplineID: discipline.DisciplineID,
+      ID: discipline.ID,
+      DisciplineName: discipline.DisciplineName,
+      CreatedAt: discipline.CreatedAt,
+      UpdatedAt: discipline.UpdatedAt,
+      disciplineMetaTags: (discipline.disciplineMetaTags || []).map(dmt => ({
+        DisciplineID: dmt.DisciplineID,
+        MetaTagCode: dmt.MetaTagCode,
+        ID: dmt.ID,
+        CreatedAt: dmt.CreatedAt,
+        metaTag: dmt.metaTag ? {
+          MetaTagCode: dmt.metaTag.MetaTagCode,
+          ID: dmt.metaTag.ID,
+          MetaTagName: dmt.metaTag.MetaTagName,
+          CreatedAt: dmt.metaTag.CreatedAt,
+          UpdatedAt: dmt.metaTag.UpdatedAt,
+        } : null,
+      })),
+    };
+    
     return {
       success: true,
       message: 'Discipline retrieved successfully',
-      data: discipline,
+      data: JSON.parse(JSON.stringify(serializedDiscipline)),
       timestamp: new Date().toISOString(),
     };
   }

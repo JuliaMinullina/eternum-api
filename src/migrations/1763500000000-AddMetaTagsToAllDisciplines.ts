@@ -103,20 +103,19 @@ export class AddMetaTagsToAllDisciplines1763500000000
       )
     `);
 
-    // Добавляем метатеги для всех дисциплин, у которых их нет
-    // Используем INSERT с ON CONFLICT DO NOTHING для безопасности
-    // И проверяем, что у дисциплины еще нет метатегов
-    
+    // Добавляем метатеги для всех дисциплин
+    // Проверяем только отсутствие конкретного метатега, а не всех метатегов
     await queryRunner.query(`
       INSERT INTO "discipline_meta_tags" ("DisciplineID", "MetaTagCode", "CreatedAt")
       SELECT d."DisciplineID", mt."MetaTagCode", NOW()
       FROM "disciplines" d
       CROSS JOIN "meta_tags" mt
       WHERE 
-        -- Добавляем только для дисциплин, у которых нет метатегов
+        -- Проверяем, что у дисциплины нет этого конкретного метатега
         NOT EXISTS (
           SELECT 1 FROM "discipline_meta_tags" dmt 
           WHERE dmt."DisciplineID" = d."DisciplineID"
+          AND dmt."MetaTagCode" = mt."MetaTagCode"
         )
         AND (
           -- Русский язык -> LANGUAGES_LITERATURE
@@ -158,6 +157,12 @@ export class AddMetaTagsToAllDisciplines1763500000000
           -- Иностранный язык — Французский -> LANGUAGES_LITERATURE
           (d."DisciplineName" = 'Иностранный язык — Французский' AND mt."MetaTagCode" = 'LANGUAGES_LITERATURE')
           OR
+          -- Иностранный язык — Китайский -> LANGUAGES_LITERATURE
+          (d."DisciplineName" = 'Иностранный язык — Китайский' AND mt."MetaTagCode" = 'LANGUAGES_LITERATURE')
+          OR
+          -- Иностранный язык — Арабский -> LANGUAGES_LITERATURE
+          (d."DisciplineName" = 'Иностранный язык — Арабский' AND mt."MetaTagCode" = 'LANGUAGES_LITERATURE')
+          OR
           -- Технология -> ENGINEERING_TECH
           (d."DisciplineName" = 'Технология' AND mt."MetaTagCode" = 'ENGINEERING_TECH')
           OR
@@ -184,36 +189,18 @@ export class AddMetaTagsToAllDisciplines1763500000000
           OR
           -- Право (с темами, ID 22) -> SOCIAL_SCIENCES
           (d."DisciplineName" = 'Право' AND d."ID" = 22 AND mt."MetaTagCode" = 'SOCIAL_SCIENCES')
-        )
-      ON CONFLICT ("DisciplineID", "MetaTagCode") DO NOTHING
-    `);
-
-    // Добавляем метатеги для дисциплин, которые могли быть пропущены предыдущей миграцией
-    // (не проверяем NOT EXISTS, так как метатеги могут отсутствовать даже если дисциплина существует)
-    await queryRunner.query(`
-      INSERT INTO "discipline_meta_tags" ("DisciplineID", "MetaTagCode", "CreatedAt")
-      SELECT d."DisciplineID", mt."MetaTagCode", NOW()
-      FROM "disciplines" d
-      CROSS JOIN "meta_tags" mt
-      WHERE 
-        -- Проверяем, что у дисциплины нет этого конкретного метатега
-        NOT EXISTS (
-          SELECT 1 FROM "discipline_meta_tags" dmt 
-          WHERE dmt."DisciplineID" = d."DisciplineID"
-          AND dmt."MetaTagCode" = mt."MetaTagCode"
-        )
-        AND (
-          -- Иностранный язык — Китайский -> LANGUAGES_LITERATURE
-          (d."DisciplineName" = 'Иностранный язык — Китайский' AND mt."MetaTagCode" = 'LANGUAGES_LITERATURE')
           OR
-          -- Иностранный язык — Арабский -> LANGUAGES_LITERATURE
-          (d."DisciplineName" = 'Иностранный язык — Арабский' AND mt."MetaTagCode" = 'LANGUAGES_LITERATURE')
+          -- Мировая художественная культура -> ARTS
+          (d."DisciplineName" = 'Мировая художественная культура' AND mt."MetaTagCode" = 'ARTS')
           OR
-          -- Мировая художественная культура -> ARTS, HUMANITIES_HISTORY
-          (d."DisciplineName" = 'Мировая художественная культура' AND mt."MetaTagCode" IN ('ARTS', 'HUMANITIES_HISTORY'))
+          -- Мировая художественная культура -> HUMANITIES_HISTORY
+          (d."DisciplineName" = 'Мировая художественная культура' AND mt."MetaTagCode" = 'HUMANITIES_HISTORY')
           OR
-          -- Культурология -> HUMANITIES_HISTORY, ARTS
-          (d."DisciplineName" = 'Культурология' AND mt."MetaTagCode" IN ('HUMANITIES_HISTORY', 'ARTS'))
+          -- Культурология -> HUMANITIES_HISTORY
+          (d."DisciplineName" = 'Культурология' AND mt."MetaTagCode" = 'HUMANITIES_HISTORY')
+          OR
+          -- Культурология -> ARTS
+          (d."DisciplineName" = 'Культурология' AND mt."MetaTagCode" = 'ARTS')
           OR
           -- Философия -> HUMANITIES_HISTORY
           (d."DisciplineName" = 'Философия' AND mt."MetaTagCode" = 'HUMANITIES_HISTORY')
@@ -226,9 +213,6 @@ export class AddMetaTagsToAllDisciplines1763500000000
           OR
           -- История России -> HUMANITIES_HISTORY
           (d."DisciplineName" = 'История России' AND mt."MetaTagCode" = 'HUMANITIES_HISTORY')
-          OR
-          -- Право (с темами, ID 22) -> SOCIAL_SCIENCES (если еще нет)
-          (d."DisciplineName" = 'Право' AND d."ID" = 22 AND mt."MetaTagCode" = 'SOCIAL_SCIENCES')
         )
       ON CONFLICT ("DisciplineID", "MetaTagCode") DO NOTHING
     `);

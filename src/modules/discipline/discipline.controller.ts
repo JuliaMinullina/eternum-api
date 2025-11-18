@@ -6,7 +6,9 @@ import {
   Param,
   Put,
   Delete,
+  UseInterceptors,
 } from '@nestjs/common';
+import { ClassSerializerInterceptor } from '@nestjs/common';
 import { DisciplineService } from './discipline.service';
 import { CreateDisciplineDto } from './dto/create-discipline.dto';
 import { UpdateDisciplineDto } from './dto/update-discipline.dto';
@@ -32,6 +34,7 @@ export class DisciplineController {
   }
 
   @Get('with-meta-tags')
+  @UseInterceptors(ClassSerializerInterceptor)
   async findAllWithMetaTags(): Promise<{
     success: boolean;
     message: string;
@@ -39,6 +42,19 @@ export class DisciplineController {
     timestamp: string;
   }> {
     const disciplines = await this.disciplineService.findAll();
+    
+    // Логирование ДО сериализации
+    const exampleWithTags = disciplines.find(d => d.disciplineMetaTags && d.disciplineMetaTags.length > 0);
+    if (exampleWithTags) {
+      console.log('[Controller] BEFORE serialization - Example discipline:', {
+        name: exampleWithTags.DisciplineName,
+        tagsCount: exampleWithTags.disciplineMetaTags.length,
+        firstTag: exampleWithTags.disciplineMetaTags[0] ? {
+          code: exampleWithTags.disciplineMetaTags[0].MetaTagCode,
+          metaTagName: exampleWithTags.disciplineMetaTags[0].metaTag?.MetaTagName
+        } : null
+      });
+    }
     
     // Явная сериализация для сохранения вложенных объектов
     const serializedDisciplines = disciplines.map(discipline => ({
@@ -62,12 +78,29 @@ export class DisciplineController {
       })),
     }));
     
-    return {
+    // Логирование ПОСЛЕ сериализации
+    const serializedExample = serializedDisciplines.find(d => d.disciplineMetaTags && d.disciplineMetaTags.length > 0);
+    if (serializedExample) {
+      console.log('[Controller] AFTER serialization - Example discipline:', {
+        name: serializedExample.DisciplineName,
+        tagsCount: serializedExample.disciplineMetaTags.length,
+        firstTag: serializedExample.disciplineMetaTags[0]
+      });
+    } else {
+      console.log('[Controller] WARNING: No disciplines with tags after serialization!');
+    }
+    
+    const response = {
       success: true,
       message: 'Disciplines with meta tags retrieved successfully',
       data: serializedDisciplines,
       timestamp: new Date().toISOString(),
     };
+    
+    console.log('[Controller] Response data length:', response.data.length);
+    console.log('[Controller] Response first discipline:', JSON.stringify(response.data[0]).substring(0, 200));
+    
+    return response;
   }
 
   @Get('by-meta-tag/:metaTagCode')

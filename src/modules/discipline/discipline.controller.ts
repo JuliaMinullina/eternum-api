@@ -34,7 +34,6 @@ export class DisciplineController {
   }
 
   @Get('with-meta-tags')
-  @UseInterceptors(ClassSerializerInterceptor)
   async findAllWithMetaTags(): Promise<{
     success: boolean;
     message: string;
@@ -90,15 +89,22 @@ export class DisciplineController {
       console.log('[Controller] WARNING: No disciplines with tags after serialization!');
     }
     
+    // Принудительная сериализация через JSON для обхода проблем с TypeORM entities
     const response = {
       success: true,
       message: 'Disciplines with meta tags retrieved successfully',
-      data: serializedDisciplines,
+      data: JSON.parse(JSON.stringify(serializedDisciplines)),
       timestamp: new Date().toISOString(),
     };
     
     console.log('[Controller] Response data length:', response.data.length);
-    console.log('[Controller] Response first discipline:', JSON.stringify(response.data[0]).substring(0, 200));
+    const firstWithTags = response.data.find((d: any) => d.disciplineMetaTags && d.disciplineMetaTags.length > 0);
+    if (firstWithTags) {
+      console.log('[Controller] Response discipline WITH tags:', JSON.stringify(firstWithTags).substring(0, 500));
+    } else {
+      console.log('[Controller] WARNING: No disciplines with tags in final response!');
+      console.log('[Controller] Response first discipline:', JSON.stringify(response.data[0]).substring(0, 200));
+    }
     
     return response;
   }

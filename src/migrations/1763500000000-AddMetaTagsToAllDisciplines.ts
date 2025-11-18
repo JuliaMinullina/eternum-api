@@ -79,6 +79,30 @@ export class AddMetaTagsToAllDisciplines1763500000000
       `);
     }
 
+    // Удаляем дублирующую дисциплину "Право" без тем (ID 23)
+    await queryRunner.query(`
+      DELETE FROM "discipline_meta_tags"
+      WHERE "DisciplineID" IN (
+        SELECT "DisciplineID" FROM "disciplines"
+        WHERE "DisciplineName" = 'Право' 
+        AND "ID" = 23
+        AND NOT EXISTS (
+          SELECT 1 FROM "topics" t 
+          WHERE t."DisciplineID" = "disciplines"."DisciplineID"
+        )
+      )
+    `);
+    
+    await queryRunner.query(`
+      DELETE FROM "disciplines"
+      WHERE "DisciplineName" = 'Право' 
+      AND "ID" = 23
+      AND NOT EXISTS (
+        SELECT 1 FROM "topics" t 
+        WHERE t."DisciplineID" = "disciplines"."DisciplineID"
+      )
+    `);
+
     // Добавляем метатеги для всех дисциплин, у которых их нет
     // Используем INSERT с ON CONFLICT DO NOTHING для безопасности
     // И проверяем, что у дисциплины еще нет метатегов
@@ -158,8 +182,53 @@ export class AddMetaTagsToAllDisciplines1763500000000
           -- Экономика -> SOCIAL_SCIENCES
           (d."DisciplineName" = 'Экономика' AND mt."MetaTagCode" = 'SOCIAL_SCIENCES')
           OR
-          -- Право (второй, ID 23) -> SOCIAL_SCIENCES
-          (d."DisciplineName" = 'Право' AND d."ID" = 23 AND mt."MetaTagCode" = 'SOCIAL_SCIENCES')
+          -- Право (с темами, ID 22) -> SOCIAL_SCIENCES
+          (d."DisciplineName" = 'Право' AND d."ID" = 22 AND mt."MetaTagCode" = 'SOCIAL_SCIENCES')
+        )
+      ON CONFLICT ("DisciplineID", "MetaTagCode") DO NOTHING
+    `);
+
+    // Добавляем метатеги для дисциплин, которые могли быть пропущены предыдущей миграцией
+    // (не проверяем NOT EXISTS, так как метатеги могут отсутствовать даже если дисциплина существует)
+    await queryRunner.query(`
+      INSERT INTO "discipline_meta_tags" ("DisciplineID", "MetaTagCode", "CreatedAt")
+      SELECT d."DisciplineID", mt."MetaTagCode", NOW()
+      FROM "disciplines" d
+      CROSS JOIN "meta_tags" mt
+      WHERE 
+        -- Проверяем, что у дисциплины нет этого конкретного метатега
+        NOT EXISTS (
+          SELECT 1 FROM "discipline_meta_tags" dmt 
+          WHERE dmt."DisciplineID" = d."DisciplineID"
+          AND dmt."MetaTagCode" = mt."MetaTagCode"
+        )
+        AND (
+          -- Иностранный язык — Китайский -> LANGUAGES_LITERATURE
+          (d."DisciplineName" = 'Иностранный язык — Китайский' AND mt."MetaTagCode" = 'LANGUAGES_LITERATURE')
+          OR
+          -- Иностранный язык — Арабский -> LANGUAGES_LITERATURE
+          (d."DisciplineName" = 'Иностранный язык — Арабский' AND mt."MetaTagCode" = 'LANGUAGES_LITERATURE')
+          OR
+          -- Мировая художественная культура -> ARTS, HUMANITIES_HISTORY
+          (d."DisciplineName" = 'Мировая художественная культура' AND mt."MetaTagCode" IN ('ARTS', 'HUMANITIES_HISTORY'))
+          OR
+          -- Культурология -> HUMANITIES_HISTORY, ARTS
+          (d."DisciplineName" = 'Культурология' AND mt."MetaTagCode" IN ('HUMANITIES_HISTORY', 'ARTS'))
+          OR
+          -- Философия -> HUMANITIES_HISTORY
+          (d."DisciplineName" = 'Философия' AND mt."MetaTagCode" = 'HUMANITIES_HISTORY')
+          OR
+          -- Общая психология -> SOCIAL_SCIENCES
+          (d."DisciplineName" = 'Общая психология' AND mt."MetaTagCode" = 'SOCIAL_SCIENCES')
+          OR
+          -- Математический анализ -> MATH_STATS
+          (d."DisciplineName" = 'Математический анализ' AND mt."MetaTagCode" = 'MATH_STATS')
+          OR
+          -- История России -> HUMANITIES_HISTORY
+          (d."DisciplineName" = 'История России' AND mt."MetaTagCode" = 'HUMANITIES_HISTORY')
+          OR
+          -- Право (с темами, ID 22) -> SOCIAL_SCIENCES (если еще нет)
+          (d."DisciplineName" = 'Право' AND d."ID" = 22 AND mt."MetaTagCode" = 'SOCIAL_SCIENCES')
         )
       ON CONFLICT ("DisciplineID", "MetaTagCode") DO NOTHING
     `);
@@ -198,24 +267,22 @@ export class AddMetaTagsToAllDisciplines1763500000000
           'Основы безопасности жизнедеятельности',
           'Экология',
           'Астрономия',
-          'Экономика'
+          'Экономика',
+          'Иностранный язык — Китайский',
+          'Иностранный язык — Арабский',
+          'Мировая художественная культура',
+          'Культурология',
+          'Философия',
+          'Общая психология',
+          'Математический анализ',
+          'История России',
+          'Право'
         )
         AND NOT EXISTS (
           SELECT 1 FROM "discipline_meta_tags" dmt2
           WHERE dmt2."DisciplineID" = d."DisciplineID"
             AND dmt2."CreatedAt" < dmt."CreatedAt"
         )
-    `);
-
-    // Удаляем метатеги для второго "Право" (ID 23), если они были добавлены этой миграцией
-    await queryRunner.query(`
-      DELETE FROM "discipline_meta_tags" dmt
-      USING "disciplines" d
-      WHERE dmt."DisciplineID" = d."DisciplineID"
-        AND d."DisciplineName" = 'Право'
-        AND d."ID" = 23
-        AND dmt."MetaTagCode" = 'SOCIAL_SCIENCES'
-        AND dmt."CreatedAt" >= NOW() - INTERVAL '1 minute'
     `);
   }
 }

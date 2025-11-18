@@ -40,19 +40,6 @@ export class DisciplineController {
   }> {
     const disciplines = await this.disciplineService.findAll();
     
-    // Логирование ДО сериализации
-    const exampleWithTags = disciplines.find(d => d.disciplineMetaTags && d.disciplineMetaTags.length > 0);
-    if (exampleWithTags) {
-      console.log('[Controller] BEFORE serialization - Example discipline:', {
-        name: exampleWithTags.DisciplineName,
-        tagsCount: exampleWithTags.disciplineMetaTags.length,
-        firstTag: exampleWithTags.disciplineMetaTags[0] ? {
-          code: exampleWithTags.disciplineMetaTags[0].MetaTagCode,
-          metaTagName: exampleWithTags.disciplineMetaTags[0].metaTag?.MetaTagName
-        } : null
-      });
-    }
-    
     // Явная сериализация для сохранения вложенных объектов
     const serializedDisciplines = disciplines.map(discipline => ({
       DisciplineID: discipline.DisciplineID,
@@ -75,36 +62,12 @@ export class DisciplineController {
       })),
     }));
     
-    // Логирование ПОСЛЕ сериализации
-    const serializedExample = serializedDisciplines.find(d => d.disciplineMetaTags && d.disciplineMetaTags.length > 0);
-    if (serializedExample) {
-      console.log('[Controller] AFTER serialization - Example discipline:', {
-        name: serializedExample.DisciplineName,
-        tagsCount: serializedExample.disciplineMetaTags.length,
-        firstTag: serializedExample.disciplineMetaTags[0]
-      });
-    } else {
-      console.log('[Controller] WARNING: No disciplines with tags after serialization!');
-    }
-    
-    // Принудительная сериализация через JSON для обхода проблем с TypeORM entities
-    const response = {
+    return {
       success: true,
       message: 'Disciplines with meta tags retrieved successfully',
       data: JSON.parse(JSON.stringify(serializedDisciplines)),
       timestamp: new Date().toISOString(),
     };
-    
-    console.log('[Controller] Response data length:', response.data.length);
-    const firstWithTags = response.data.find((d: any) => d.disciplineMetaTags && d.disciplineMetaTags.length > 0);
-    if (firstWithTags) {
-      console.log('[Controller] Response discipline WITH tags:', JSON.stringify(firstWithTags).substring(0, 500));
-    } else {
-      console.log('[Controller] WARNING: No disciplines with tags in final response!');
-      console.log('[Controller] Response first discipline:', JSON.stringify(response.data[0]).substring(0, 200));
-    }
-    
-    return response;
   }
 
   @Get('by-meta-tag/:metaTagCode')

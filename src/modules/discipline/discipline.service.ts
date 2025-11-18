@@ -13,12 +13,40 @@ export class DisciplineService {
   ) {}
 
   async findAll(): Promise<Discipline[]> {
-    return this.disciplineRepository.find({
-      relations: ['disciplineMetaTags', 'disciplineMetaTags.metaTag'],
-      order: {
-        ID: 'ASC',
-      },
-    });
+    // Используем QueryBuilder для явной загрузки relations
+    const disciplines = await this.disciplineRepository
+      .createQueryBuilder('discipline')
+      .leftJoinAndSelect('discipline.disciplineMetaTags', 'disciplineMetaTag')
+      .leftJoinAndSelect('disciplineMetaTag.metaTag', 'metaTag')
+      .orderBy('discipline.ID', 'ASC')
+      .getMany();
+    
+    // Логирование для диагностики
+    console.log(`[DisciplineService] Found ${disciplines.length} disciplines`);
+    const withTags = disciplines.filter(d => d.disciplineMetaTags && d.disciplineMetaTags.length > 0);
+    console.log(`[DisciplineService] Disciplines with meta tags: ${withTags.length}`);
+    if (withTags.length > 0) {
+      console.log(`[DisciplineService] Example discipline with tags:`, {
+        name: withTags[0].DisciplineName,
+        tagsCount: withTags[0].disciplineMetaTags?.length,
+        tags: withTags[0].disciplineMetaTags?.map(t => ({
+          code: t.MetaTagCode,
+          metaTagName: t.metaTag?.MetaTagName
+        }))
+      });
+    } else {
+      // Проверяем, есть ли вообще данные в таблице
+      const testDiscipline = disciplines[0];
+      if (testDiscipline) {
+        console.log(`[DisciplineService] Example discipline (no tags):`, {
+          name: testDiscipline.DisciplineName,
+          id: testDiscipline.DisciplineID,
+          disciplineMetaTags: testDiscipline.disciplineMetaTags
+        });
+      }
+    }
+    
+    return disciplines;
   }
 
   async findOne(id: string): Promise<Discipline> {

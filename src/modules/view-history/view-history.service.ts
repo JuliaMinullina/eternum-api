@@ -181,6 +181,7 @@ export class ViewHistoryService {
     if (disciplineIds.length === 0) return [];
     return this.disciplineRepository.find({
       where: { DisciplineID: In(disciplineIds) },
+      relations: ['disciplineMetaTags', 'disciplineMetaTags.metaTag'],
     });
   }
 

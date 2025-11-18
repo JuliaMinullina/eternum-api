@@ -6,9 +6,7 @@ import {
   Param,
   Put,
   Delete,
-  UseInterceptors,
 } from '@nestjs/common';
-import { ClassSerializerInterceptor } from '@nestjs/common';
 import { DisciplineService } from './discipline.service';
 import { CreateDisciplineDto } from './dto/create-discipline.dto';
 import { UpdateDisciplineDto } from './dto/update-discipline.dto';

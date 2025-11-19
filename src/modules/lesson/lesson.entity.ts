@@ -22,6 +22,15 @@ export class Lesson {
   @Column({ type: 'uuid' })
   TopicID: string;
 
+  @Column({ default: false })
+  IsVerified: boolean;
+
+  @Column({ type: 'int', nullable: true })
+  Order: number;
+
+  @Column({ type: 'text', nullable: true })
+  Description: string;
+
   @CreateDateColumn()
   CreatedAt: Date;
 

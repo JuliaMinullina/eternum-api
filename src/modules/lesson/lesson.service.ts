@@ -27,8 +27,18 @@ export class LessonService {
   }
 
   async findByTopic(topicId: string): Promise<Lesson[]> {
-    return this.lessonRepository.find({
+    const lessons = await this.lessonRepository.find({
       where: { TopicID: topicId },
+    });
+    
+    // Сортируем: сначала по Order (NULL в конец), затем по CreatedAt
+    return lessons.sort((a, b) => {
+      if (a.Order !== null && b.Order !== null) {
+        return a.Order - b.Order;
+      }
+      if (a.Order !== null) return -1;
+      if (b.Order !== null) return 1;
+      return a.CreatedAt.getTime() - b.CreatedAt.getTime();
     });
   }
 

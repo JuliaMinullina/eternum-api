@@ -36,57 +36,45 @@ import { Profile } from './modules/profile/profile.entity';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRootAsync({
-      useFactory: async () => {
-        const config = {
-          type: 'postgres' as const,
-          host: process.env.DB_HOST || 'localhost',
-          port: parseInt(process.env.DB_PORT || '5432'),
-          username: process.env.DB_USERNAME || 'postgres',
-          password: process.env.DB_PASSWORD || 'password',
-          database: process.env.DB_NAME || 'eternum_db',
-          entities: [
-            User,
-            Discipline,
-            Topic,
-            Lesson,
-            ViewHistory,
-            MetaTag,
-            DisciplineMetaTag,
-            RefreshToken,
-            Chat,
-            Message,
-            RecommendedTrack,
-            TrackItem,
-            UserDailyLogin,
-            Profile,
-          ],
-          migrations: [__dirname + '/migrations/*{.ts,.js}'],
-          migrationsRun: false, // Миграции запускаются вручную через start.sh
-          synchronize: false,
-          // Настройки для обработки ошибок подключения
-          retryAttempts: 0, // Не пытаемся переподключаться при старте
-          retryDelay: 0,
-          // Не падаем при ошибках подключения, обрабатываем их в запросах
-          extra: {
-            max: 20,
-            connectionTimeoutMillis: 2000, // Очень быстрый таймаут
-            idleTimeoutMillis: 30000,
-          },
-          // Продолжаем работу даже при ошибках подключения
-          autoLoadEntities: true,
-          // Не валидируем подключение при старте
-          logging: process.env.NODE_ENV !== 'production' ? ['error'] : false,
-        };
-        
-        // Пытаемся подключиться, но не падаем при ошибке
-        try {
-          return config;
-        } catch (error) {
-          console.error('⚠️  Database configuration error (continuing anyway):', error);
-          return config; // Все равно возвращаем конфиг
-        }
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      username: process.env.DB_USERNAME || 'postgres',
+      password: process.env.DB_PASSWORD || 'password',
+      database: process.env.DB_NAME || 'eternum_db',
+      entities: [
+        User,
+        Discipline,
+        Topic,
+        Lesson,
+        ViewHistory,
+        MetaTag,
+        DisciplineMetaTag,
+        RefreshToken,
+        Chat,
+        Message,
+        RecommendedTrack,
+        TrackItem,
+        UserDailyLogin,
+        Profile,
+      ],
+      migrations: [__dirname + '/migrations/*{.ts,.js}'],
+      migrationsRun: false, // Миграции запускаются вручную через start.sh
+      synchronize: false,
+      // Настройки для обработки ошибок подключения
+      retryAttempts: 0, // Не пытаемся переподключаться при старте
+      retryDelay: 0,
+      // Не падаем при ошибках подключения, обрабатываем их в запросах
+      extra: {
+        max: 20,
+        connectionTimeoutMillis: 1000, // Очень быстрый таймаут - 1 секунда
+        idleTimeoutMillis: 30000,
       },
+      // Продолжаем работу даже при ошибках подключения
+      autoLoadEntities: true,
+      // Не валидируем подключение при старте
+      logging: false, // Отключаем логирование для быстрого старта
     }),
     UserModule,
     AuthModule,

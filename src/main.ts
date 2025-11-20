@@ -10,6 +10,7 @@ async function bootstrap() {
     // Создаем приложение с опцией не падать при ошибках подключения к БД
     const app = await NestFactory.create(AppModule, {
       abortOnError: false, // Не падаем при ошибках
+      logger: ['error', 'warn', 'log'], // Логируем только важное
     });
 
     // Подключаем cookie-parser

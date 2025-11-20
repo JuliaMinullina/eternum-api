@@ -21,13 +21,23 @@ export class MetaTagController {
     data: MetaTag[];
     timestamp: string;
   }> {
-    const metaTags = await this.metaTagService.findAll();
-    return {
-      success: true,
-      message: 'Meta tags retrieved successfully',
-      data: metaTags,
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      const metaTags = await this.metaTagService.findAll();
+      return {
+        success: true,
+        message: 'Meta tags retrieved successfully',
+        data: metaTags || [],
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Error in findAll meta tags:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error retrieving meta tags',
+        data: [],
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   @Get(':code')

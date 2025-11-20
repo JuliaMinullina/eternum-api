@@ -22,13 +22,23 @@ export class DisciplineController {
     data: any[];
     timestamp: string;
   }> {
-    const disciplines = await this.disciplineService.findAll();
-    return {
-      success: true,
-      message: 'Disciplines retrieved successfully',
-      data: disciplines,
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      const disciplines = await this.disciplineService.findAll();
+      return {
+        success: true,
+        message: 'Disciplines retrieved successfully',
+        data: disciplines || [],
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Error in findAll disciplines:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error retrieving disciplines',
+        data: [],
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   @Get('with-meta-tags')
@@ -38,36 +48,46 @@ export class DisciplineController {
     data: any[];
     timestamp: string;
   }> {
-    const disciplines = await this.disciplineService.findAll();
-    
-    // Явная сериализация для сохранения вложенных объектов
-    const serializedDisciplines = disciplines.map(discipline => ({
-      DisciplineID: discipline.DisciplineID,
-      ID: discipline.ID,
-      DisciplineName: discipline.DisciplineName,
-      CreatedAt: discipline.CreatedAt,
-      UpdatedAt: discipline.UpdatedAt,
-      disciplineMetaTags: (discipline.disciplineMetaTags || []).map(dmt => ({
-        DisciplineID: dmt.DisciplineID,
-        MetaTagCode: dmt.MetaTagCode,
-        ID: dmt.ID,
-        CreatedAt: dmt.CreatedAt,
-        metaTag: dmt.metaTag ? {
-          MetaTagCode: dmt.metaTag.MetaTagCode,
-          ID: dmt.metaTag.ID,
-          MetaTagName: dmt.metaTag.MetaTagName,
-          CreatedAt: dmt.metaTag.CreatedAt,
-          UpdatedAt: dmt.metaTag.UpdatedAt,
-        } : null,
-      })),
-    }));
-    
-    return {
-      success: true,
-      message: 'Disciplines with meta tags retrieved successfully',
-      data: JSON.parse(JSON.stringify(serializedDisciplines)),
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      const disciplines = await this.disciplineService.findAll();
+      
+      // Явная сериализация для сохранения вложенных объектов
+      const serializedDisciplines = (disciplines || []).map(discipline => ({
+        DisciplineID: discipline.DisciplineID,
+        ID: discipline.ID,
+        DisciplineName: discipline.DisciplineName,
+        CreatedAt: discipline.CreatedAt,
+        UpdatedAt: discipline.UpdatedAt,
+        disciplineMetaTags: (discipline.disciplineMetaTags || []).map(dmt => ({
+          DisciplineID: dmt.DisciplineID,
+          MetaTagCode: dmt.MetaTagCode,
+          ID: dmt.ID,
+          CreatedAt: dmt.CreatedAt,
+          metaTag: dmt.metaTag ? {
+            MetaTagCode: dmt.metaTag.MetaTagCode,
+            ID: dmt.metaTag.ID,
+            MetaTagName: dmt.metaTag.MetaTagName,
+            CreatedAt: dmt.metaTag.CreatedAt,
+            UpdatedAt: dmt.metaTag.UpdatedAt,
+          } : null,
+        })),
+      }));
+      
+      return {
+        success: true,
+        message: 'Disciplines with meta tags retrieved successfully',
+        data: JSON.parse(JSON.stringify(serializedDisciplines)),
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Error in findAllWithMetaTags:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error retrieving disciplines with meta tags',
+        data: [],
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   @Get('by-meta-tag/:metaTagCode')

@@ -5,6 +5,30 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import cookieParser from 'cookie-parser';
 
+// Глобальный обработчик необработанных ошибок БД
+process.on('unhandledRejection', (reason: any, promise) => {
+  if (reason?.message?.includes('could not write init file') || 
+      reason?.code === 'XX000' ||
+      reason?.message?.includes('connection')) {
+    console.error('⚠️  Unhandled database error (ignoring):', reason?.message || reason);
+    // Не падаем при ошибках БД
+    return;
+  }
+  console.error('❌ Unhandled rejection:', reason);
+});
+
+process.on('uncaughtException', (error: any) => {
+  if (error?.message?.includes('could not write init file') || 
+      error?.code === 'XX000' ||
+      error?.message?.includes('connection')) {
+    console.error('⚠️  Uncaught database error (ignoring):', error?.message || error);
+    // Не падаем при ошибках БД
+    return;
+  }
+  console.error('❌ Uncaught exception:', error);
+  process.exit(1);
+});
+
 async function bootstrap() {
   try {
     // Создаем приложение с опцией не падать при ошибках подключения к БД

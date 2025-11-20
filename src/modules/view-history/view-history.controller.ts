@@ -127,7 +127,19 @@ export class ViewHistoryController {
   @Get('my/unique/disciplines')
   @UseGuards(JwtAuthGuard)
   async getMyUniqueDisciplines(@Request() req): Promise<Discipline[]> {
-    return this.viewHistoryService.getUniqueVisitedDisciplines(req.user.UserID);
+    try {
+      return await this.viewHistoryService.getUniqueVisitedDisciplines(req.user.UserID);
+    } catch (error: any) {
+      console.error('Error in getMyUniqueDisciplines:', error);
+      // Если это ошибка базы данных, возвращаем пустой массив вместо падения
+      if (error?.message?.includes('could not write init file') || 
+          error?.message?.includes('connection') ||
+          error?.code === 'ECONNREFUSED') {
+        console.warn('Database error in getMyUniqueDisciplines, returning empty array');
+        return [];
+      }
+      throw error;
+    }
   }
 
   @Get('my/unique/meta-tags')

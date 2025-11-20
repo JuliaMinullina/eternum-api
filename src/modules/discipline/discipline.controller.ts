@@ -113,7 +113,8 @@ export class DisciplineController {
     data: any;
     timestamp: string;
   }> {
-    const discipline = await this.disciplineService.findOne(id);
+    try {
+      const discipline = await this.disciplineService.findOne(id);
     
     // Явная сериализация для сохранения метатегов
     const serializedDiscipline = {
@@ -137,12 +138,38 @@ export class DisciplineController {
       })),
     };
     
-    return {
-      success: true,
-      message: 'Discipline retrieved successfully',
-      data: JSON.parse(JSON.stringify(serializedDiscipline)),
-      timestamp: new Date().toISOString(),
-    };
+      return {
+        success: true,
+        message: 'Discipline retrieved successfully',
+        data: JSON.parse(JSON.stringify(serializedDiscipline)),
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error: any) {
+      console.error('Error in findOne discipline:', error);
+      // Если это ошибка базы данных, возвращаем структурированный ответ
+      if (error?.message?.includes('could not write init file') || 
+          error?.message?.includes('connection') ||
+          error?.code === 'ECONNREFUSED' ||
+          error?.code === 'ENOTFOUND') {
+        return {
+          success: false,
+          message: 'Database connection error. Please try again later.',
+          data: null,
+          timestamp: new Date().toISOString(),
+        };
+      }
+      // Если это NotFoundException, пробрасываем его
+      if (error?.status === 404 || error?.message?.includes('not found')) {
+        throw error;
+      }
+      // Для всех остальных ошибок возвращаем общее сообщение
+      return {
+        success: false,
+        message: 'Failed to retrieve discipline. Please try again later.',
+        data: null,
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   @Post()

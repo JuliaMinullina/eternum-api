@@ -49,10 +49,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // Специальная обработка ошибок подключения к базе данных
       if (message.includes('Database connection failed') || 
           message.includes('connect') ||
+          message.includes('could not write init file') ||
+          message.includes('connection to server') ||
           (exception as any)?.code === 'ECONNREFUSED' ||
-          (exception as any)?.code === 'ENOTFOUND') {
+          (exception as any)?.code === 'ENOTFOUND' ||
+          (exception as any)?.code === 'ECONNRESET') {
         status = HttpStatus.SERVICE_UNAVAILABLE;
-        message = 'Database connection failed. Please ensure PostgreSQL is running.';
+        message = 'Database connection error. Please try again later.';
       }
     }
 

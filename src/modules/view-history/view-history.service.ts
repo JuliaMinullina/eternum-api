@@ -172,17 +172,30 @@ export class ViewHistoryService {
   }
 
   async getUniqueVisitedDisciplines(userId: string): Promise<Discipline[]> {
-    const views = await this.viewHistoryRepository.find({
-      where: { UserID: userId, ViewType: ViewType.DISCIPLINE },
-    });
-    const disciplineIds = [
-      ...new Set(views.map((v) => v.DisciplineID).filter(Boolean)),
-    ] as string[];
-    if (disciplineIds.length === 0) return [];
-    return this.disciplineRepository.find({
-      where: { DisciplineID: In(disciplineIds) },
-      relations: ['disciplineMetaTags', 'disciplineMetaTags.metaTag'],
-    });
+    try {
+      const views = await this.viewHistoryRepository.find({
+        where: { UserID: userId, ViewType: ViewType.DISCIPLINE },
+      });
+      const disciplineIds = [
+        ...new Set(views.map((v) => v.DisciplineID).filter(Boolean)),
+      ] as string[];
+      if (disciplineIds.length === 0) return [];
+      return await this.disciplineRepository.find({
+        where: { DisciplineID: In(disciplineIds) },
+        relations: ['disciplineMetaTags', 'disciplineMetaTags.metaTag'],
+      });
+    } catch (error: any) {
+      console.error('Error in getUniqueVisitedDisciplines:', error);
+      // Если это ошибка базы данных, возвращаем пустой массив
+      if (error?.message?.includes('could not write init file') || 
+          error?.message?.includes('connection') ||
+          error?.code === 'ECONNREFUSED' ||
+          error?.code === 'ENOTFOUND') {
+        console.warn('Database error in getUniqueVisitedDisciplines, returning empty array');
+        return [];
+      }
+      throw error;
+    }
   }
 
   async getUniqueVisitedMetaTags(userId: string): Promise<MetaTag[]> {

@@ -23,14 +23,30 @@ export class DisciplineService {
   }
 
   async findOne(id: string): Promise<Discipline> {
-    const discipline = await this.disciplineRepository.findOne({
-      where: { DisciplineID: id },
-      relations: ['disciplineMetaTags', 'disciplineMetaTags.metaTag'],
-    });
-    if (!discipline) {
-      throw new NotFoundException(`Discipline with ID ${id} not found`);
+    try {
+      const discipline = await this.disciplineRepository.findOne({
+        where: { DisciplineID: id },
+        relations: ['disciplineMetaTags', 'disciplineMetaTags.metaTag'],
+      });
+      if (!discipline) {
+        throw new NotFoundException(`Discipline with ID ${id} not found`);
+      }
+      return discipline;
+    } catch (error: any) {
+      console.error('Error in disciplineService.findOne:', error);
+      // Если это NotFoundException, пробрасываем его
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      // Если это ошибка базы данных, пробрасываем с понятным сообщением
+      if (error?.message?.includes('could not write init file') || 
+          error?.message?.includes('connection') ||
+          error?.code === 'ECONNREFUSED' ||
+          error?.code === 'ENOTFOUND') {
+        throw new Error('Database connection error. Please try again later.');
+      }
+      throw error;
     }
-    return discipline;
   }
 
   async create(createDisciplineDto: CreateDisciplineDto): Promise<Discipline> {

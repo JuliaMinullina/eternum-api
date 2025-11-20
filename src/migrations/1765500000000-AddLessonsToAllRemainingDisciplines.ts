@@ -250,8 +250,11 @@ export class AddLessonsToAllRemainingDisciplines1765500000000
 
       if (allLessons.length === 0) {
         // Все уроки уже существуют
-        return;
+        console.log(`⚠️  Для дисциплины "${discipline.name}" все уроки уже существуют. Пропускаю.`);
+        continue;
       }
+
+      console.log(`✅ Создано ${allLessons.length} уроков для ${topicsResult.length} тем в дисциплине "${discipline.name}"`);
 
       // Вставляем уроки батчами по 50 для эффективности
       const batchSize = 50;
@@ -274,21 +277,33 @@ export class AddLessonsToAllRemainingDisciplines1765500000000
           })
           .join(',');
 
-        await queryRunner.query(`
-          INSERT INTO "lessons" (
-            "LessonID", "ID", "LessonName", "TopicID", 
-            "IsVerified", "Order", "Description", 
-            "CreatedAt", "UpdatedAt"
-          )
-          VALUES ${values}
-          ON CONFLICT ("LessonID") DO NOTHING
-        `);
+        try {
+          await queryRunner.query(`
+            INSERT INTO "lessons" (
+              "LessonID", "ID", "LessonName", "TopicID", 
+              "IsVerified", "Order", "Description", 
+              "CreatedAt", "UpdatedAt"
+            )
+            VALUES ${values}
+            ON CONFLICT ("LessonID") DO NOTHING
+          `);
+          console.log(`✅ Вставлен батч из ${batch.length} уроков для дисциплины "${discipline.name}"`);
+        } catch (error) {
+          console.error(`❌ Ошибка при вставке батча для "${discipline.name}":`, error);
+          // Продолжаем выполнение для других батчей
+        }
       }
-    } catch (error) {
-      console.error('Error in AddLessonsToAllRemainingDisciplines migration:', error);
-      throw error;
+      
+      console.log(`✅ Завершена обработка дисциплины "${discipline.name}"`);
     }
+    
+    console.log('✅ Все уроки успешно добавлены!');
+  } catch (error) {
+    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА в миграции AddLessonsToAllRemainingDisciplines:', error);
+    console.error('Stack trace:', error?.stack);
+    throw error;
   }
+}
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     try {

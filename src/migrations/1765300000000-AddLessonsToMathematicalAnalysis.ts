@@ -889,158 +889,154 @@ export class AddLessonsToMathematicalAnalysis1765300000000
   }
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    console.log('📐 Начинаю добавление уроков для дисциплины "Математический анализ"...');
+    try {
+      // ID дисциплины "Математический анализ"
+      const MATHEMATICAL_ANALYSIS_DISCIPLINE_ID = 'b0c9d8e7-3f6b-5462-5d7b-7e8f9a0b1c2d';
 
-    // Проверяем существование таблицы lessons
-    const tableExists = await queryRunner.query(`
-      SELECT 1 FROM information_schema.tables 
-      WHERE table_schema = 'public' AND table_name = 'lessons'
-    `);
-
-    if (!(Array.isArray(tableExists) && tableExists.length > 0)) {
-      throw new Error('Table lessons does not exist');
-    }
-
-    // Проверяем существование колонок
-    const isVerifiedExists = await queryRunner.query(`
-      SELECT 1 FROM information_schema.columns 
-      WHERE table_schema = 'public' 
-      AND table_name = 'lessons' 
-      AND column_name = 'IsVerified'
-    `);
-
-    if (!(Array.isArray(isVerifiedExists) && isVerifiedExists.length > 0)) {
-      throw new Error('Column IsVerified does not exist. Please run migration 1763600000000-AddFieldsToLessons first.');
-    }
-
-    // ID дисциплины "Математический анализ"
-    const MATHEMATICAL_ANALYSIS_DISCIPLINE_ID = 'b0c9d8e7-3f6b-5462-5d7b-7e8f9a0b1c2d';
-
-    // Получаем максимальный ID уроков
-    const maxIdResult = await queryRunner.query(`
-      SELECT COALESCE(MAX("ID"), 0) as max_id FROM "lessons"
-    `);
-    const maxLessonId = parseInt(maxIdResult[0]?.max_id || '0', 10);
-    let nextLessonId = maxLessonId + 1;
-
-    // Получаем все темы для дисциплины "Математический анализ"
-    const topicsResult = await queryRunner.query(`
-      SELECT "TopicID", "TopicName", "DisciplineID"
-      FROM "topics"
-      WHERE "DisciplineID" = '${MATHEMATICAL_ANALYSIS_DISCIPLINE_ID}'
-      ORDER BY "ID"
-    `);
-
-    if (!Array.isArray(topicsResult) || topicsResult.length === 0) {
-      console.log('⚠️  Темы для дисциплины "Математический анализ" не найдены');
-      return;
-    }
-
-    console.log(`📝 Найдено ${topicsResult.length} тем для обработки`);
-
-    // Проверяем, есть ли уже уроки для этих тем
-    const topicIds = topicsResult.map(t => t.TopicID);
-    if (topicIds.length === 0) {
-      console.log('⚠️  Темы не найдены');
-      return;
-    }
-    
-    const topicIdsStr = topicIds.map(id => `'${id}'`).join(', ');
-    const existingLessons = await queryRunner.query(`
-      SELECT COUNT(*) as count FROM "lessons"
-      WHERE "TopicID" IN (${topicIdsStr})
-    `);
-
-    const existingCount = parseInt(existingLessons[0]?.count || '0', 10);
-    if (existingCount > 0) {
-      console.log(`⚠️  Для некоторых тем уже существуют ${existingCount} уроков. Пропускаем создание дубликатов (используется ON CONFLICT DO NOTHING).`);
-    }
-
-    // Генерируем уроки для каждой темы
-    const allLessons: Array<{
-      LessonID: string;
-      ID: number;
-      LessonName: string;
-      TopicID: string;
-      IsVerified: boolean;
-      Order: number;
-      Description: string | null;
-      CreatedAt: Date;
-      UpdatedAt: Date;
-    }> = [];
-
-    for (const topic of topicsResult) {
-      const lessonPlan = this.getLessonPlanForTopic(topic.TopicName);
-      
-      for (let i = 0; i < lessonPlan.count; i++) {
-        const lessonId = nextLessonId++;
-        allLessons.push({
-          LessonID: this.generateDeterministicUUID(topic.TopicID, lessonId),
-          ID: lessonId,
-          LessonName: lessonPlan.names[i],
-          TopicID: topic.TopicID,
-          IsVerified: false,
-          Order: i + 1,
-          Description: `Урок по теме "${topic.TopicName}"`,
-          CreatedAt: new Date('2025-08-16T12:00:00Z'),
-          UpdatedAt: new Date('2025-08-16T12:00:00Z'),
-        });
-      }
-    }
-
-    console.log(`📐 Создано ${allLessons.length} уроков для ${topicsResult.length} тем`);
-
-    // Вставляем уроки батчами по 50 для эффективности
-    const batchSize = 50;
-    for (let i = 0; i < allLessons.length; i += batchSize) {
-      const batch = allLessons.slice(i, i + batchSize);
-      
-      const values = batch
-        .map((lesson) => {
-          return `(
-            '${lesson.LessonID}',
-            ${lesson.ID},
-            ${this.escapeString(lesson.LessonName)},
-            '${lesson.TopicID}'::uuid,
-            ${lesson.IsVerified},
-            ${lesson.Order !== null ? lesson.Order : 'NULL'},
-            ${lesson.Description ? this.escapeString(lesson.Description) : 'NULL'},
-            '${lesson.CreatedAt.toISOString()}'::timestamp,
-            '${lesson.UpdatedAt.toISOString()}'::timestamp
-          )`;
-        })
-        .join(',');
-
-      await queryRunner.query(`
-        INSERT INTO "lessons" (
-          "LessonID", "ID", "LessonName", "TopicID", 
-          "IsVerified", "Order", "Description", 
-          "CreatedAt", "UpdatedAt"
-        )
-        VALUES ${values}
-        ON CONFLICT ("LessonID") DO NOTHING
+      // Проверяем существование таблицы lessons
+      const tableExists = await queryRunner.query(`
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'lessons'
       `);
-    }
 
-    console.log('✅ Уроки успешно добавлены!');
+      if (!(Array.isArray(tableExists) && tableExists.length > 0)) {
+        throw new Error('Table lessons does not exist');
+      }
+
+      // Получаем все темы для дисциплины "Математический анализ"
+      const topicsResult = await queryRunner.query(`
+        SELECT "TopicID", "TopicName", "DisciplineID"
+        FROM "topics"
+        WHERE "DisciplineID" = '${MATHEMATICAL_ANALYSIS_DISCIPLINE_ID}'
+        ORDER BY "ID"
+      `);
+
+      if (!Array.isArray(topicsResult) || topicsResult.length === 0) {
+        // Если тем нет, просто выходим - это не ошибка
+        return;
+      }
+
+      // Получаем максимальный ID уроков
+      const maxIdResult = await queryRunner.query(`
+        SELECT COALESCE(MAX("ID"), 0) as max_id FROM "lessons"
+      `);
+      const maxLessonId = parseInt(maxIdResult[0]?.max_id || '0', 10);
+      let nextLessonId = maxLessonId + 1;
+
+      // Получаем существующие уроки для этих тем, чтобы не создавать дубликаты
+      const topicIds = topicsResult.map(t => t.TopicID);
+      if (topicIds.length === 0) {
+        return;
+      }
+      
+      const topicIdsStr = topicIds.map(id => `'${id}'`).join(', ');
+      const existingLessonsResult = await queryRunner.query(`
+        SELECT "LessonID", "TopicID" FROM "lessons"
+        WHERE "TopicID" IN (${topicIdsStr})
+      `);
+
+      const existingLessonIds = new Set(
+        existingLessonsResult.map((l: any) => l.LessonID)
+      );
+
+      // Генерируем уроки для каждой темы
+      const allLessons: Array<{
+        LessonID: string;
+        ID: number;
+        LessonName: string;
+        TopicID: string;
+        IsVerified: boolean;
+        Order: number;
+        Description: string | null;
+        CreatedAt: Date;
+        UpdatedAt: Date;
+      }> = [];
+
+      for (const topic of topicsResult) {
+        const lessonPlan = this.getLessonPlanForTopic(topic.TopicName);
+        
+        for (let i = 0; i < lessonPlan.count; i++) {
+          const lessonId = nextLessonId++;
+          const lessonUUID = this.generateDeterministicUUID(topic.TopicID, lessonId);
+          
+          // Пропускаем уроки, которые уже существуют
+          if (existingLessonIds.has(lessonUUID)) {
+            continue;
+          }
+
+          allLessons.push({
+            LessonID: lessonUUID,
+            ID: lessonId,
+            LessonName: lessonPlan.names[i],
+            TopicID: topic.TopicID,
+            IsVerified: false,
+            Order: i + 1,
+            Description: `Урок по теме "${topic.TopicName}"`,
+            CreatedAt: new Date('2025-08-16T12:00:00Z'),
+            UpdatedAt: new Date('2025-08-16T12:00:00Z'),
+          });
+        }
+      }
+
+      if (allLessons.length === 0) {
+        // Все уроки уже существуют
+        return;
+      }
+
+      // Вставляем уроки батчами по 50 для эффективности
+      const batchSize = 50;
+      for (let i = 0; i < allLessons.length; i += batchSize) {
+        const batch = allLessons.slice(i, i + batchSize);
+        
+        const values = batch
+          .map((lesson) => {
+            return `(
+              '${lesson.LessonID}',
+              ${lesson.ID},
+              ${this.escapeString(lesson.LessonName)},
+              '${lesson.TopicID}'::uuid,
+              ${lesson.IsVerified},
+              ${lesson.Order !== null ? lesson.Order : 'NULL'},
+              ${lesson.Description ? this.escapeString(lesson.Description) : 'NULL'},
+              '${lesson.CreatedAt.toISOString()}'::timestamp,
+              '${lesson.UpdatedAt.toISOString()}'::timestamp
+            )`;
+          })
+          .join(',');
+
+        await queryRunner.query(`
+          INSERT INTO "lessons" (
+            "LessonID", "ID", "LessonName", "TopicID", 
+            "IsVerified", "Order", "Description", 
+            "CreatedAt", "UpdatedAt"
+          )
+          VALUES ${values}
+          ON CONFLICT ("LessonID") DO NOTHING
+        `);
+      }
+    } catch (error) {
+      console.error('Error in AddLessonsToMathematicalAnalysis migration:', error);
+      throw error;
+    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    console.log('🔄 Откатываю добавление уроков...');
+    try {
+      // ID дисциплины "Математический анализ"
+      const MATHEMATICAL_ANALYSIS_DISCIPLINE_ID = 'b0c9d8e7-3f6b-5462-5d7b-7e8f9a0b1c2d';
 
-    // ID дисциплины "Математический анализ"
-    const MATHEMATICAL_ANALYSIS_DISCIPLINE_ID = 'b0c9d8e7-3f6b-5462-5d7b-7e8f9a0b1c2d';
-
-    // Удаляем уроки для тем дисциплины "Математический анализ"
-    await queryRunner.query(`
-      DELETE FROM "lessons"
-      WHERE "TopicID" IN (
-        SELECT "TopicID" FROM "topics"
-        WHERE "DisciplineID" = '${MATHEMATICAL_ANALYSIS_DISCIPLINE_ID}'
-      )
-    `);
-
-    console.log('✅ Откат завершен');
+      // Удаляем уроки для тем дисциплины "Математический анализ"
+      await queryRunner.query(`
+        DELETE FROM "lessons"
+        WHERE "TopicID" IN (
+          SELECT "TopicID" FROM "topics"
+          WHERE "DisciplineID" = '${MATHEMATICAL_ANALYSIS_DISCIPLINE_ID}'
+        )
+      `);
+    } catch (error) {
+      console.error('Error in AddLessonsToMathematicalAnalysis down migration:', error);
+      throw error;
+    }
   }
 }
 

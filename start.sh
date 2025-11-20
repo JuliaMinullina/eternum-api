@@ -4,12 +4,14 @@
 echo "=========================================="
 echo "🔄 Running migrations..."
 echo "=========================================="
-npm run migration:run:prod:node || {
+set +e  # Не останавливаться при ошибках
+npm run migration:run:prod:node 2>&1 || {
   echo "⚠️  Migration script failed, trying alternative method..."
-  npm run migration:run:prod || {
-    echo "❌ All migration methods failed, but continuing..."
+  npm run migration:run:prod 2>&1 || {
+    echo "❌ All migration methods failed, but continuing to start application..."
   }
 }
+set -e  # Включаем остановку при ошибках обратно
 
 echo ""
 echo "=========================================="

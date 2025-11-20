@@ -75,8 +75,6 @@ import { Profile } from './modules/profile/profile.entity';
       autoLoadEntities: true,
       // Не валидируем подключение при старте
       logging: false, // Отключаем логирование для быстрого старта
-      // Пытаемся подключиться, но не падаем при ошибке
-      connectTimeoutMS: 500,
     }),
     UserModule,
     AuthModule,

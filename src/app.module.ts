@@ -63,16 +63,18 @@ import { Profile } from './modules/profile/profile.entity';
       migrationsRun: false, // Миграции запускаются вручную через start.sh
       synchronize: false,
       // Настройки для обработки ошибок подключения
-      retryAttempts: 1, // Только 1 попытка, чтобы быстрее продолжить
-      retryDelay: 1000,
+      retryAttempts: 0, // Не пытаемся переподключаться при старте
+      retryDelay: 0,
       // Не падаем при ошибках подключения, обрабатываем их в запросах
       extra: {
         max: 20,
-        connectionTimeoutMillis: 3000, // Быстрый таймаут
+        connectionTimeoutMillis: 2000, // Очень быстрый таймаут
         idleTimeoutMillis: 30000,
       },
       // Продолжаем работу даже при ошибках подключения
       autoLoadEntities: true,
+      // Не валидируем подключение при старте
+      logging: process.env.NODE_ENV !== 'production' ? ['error'] : false,
     }),
     UserModule,
     AuthModule,

@@ -62,6 +62,15 @@ import { Profile } from './modules/profile/profile.entity';
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
       migrationsRun: false, // Миграции запускаются вручную через start.sh
       synchronize: false,
+      // Настройки для обработки ошибок подключения
+      retryAttempts: 5,
+      retryDelay: 3000,
+      // Не падаем при ошибках подключения, обрабатываем их в запросах
+      extra: {
+        max: 20,
+        connectionTimeoutMillis: 10000,
+        idleTimeoutMillis: 30000,
+      },
     }),
     UserModule,
     AuthModule,

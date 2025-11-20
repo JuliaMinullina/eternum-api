@@ -75,14 +75,10 @@ export class DisciplineController {
         data: JSON.parse(JSON.stringify(serializedDisciplines)),
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in findAllWithMetaTags:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Error retrieving disciplines with meta tags',
-        data: [],
-        timestamp: new Date().toISOString(),
-      };
+      // Пробрасываем ошибку, чтобы фронтенд видел проблему
+      throw error;
     }
   }
 

@@ -250,11 +250,11 @@ export class AddLessonsToAllRemainingDisciplines1765500000000
 
       if (allLessons.length === 0) {
         // Все уроки уже существуют
-        console.log(`⚠️  Для дисциплины "${discipline.name}" все уроки уже существуют. Пропускаю.`);
-        continue;
+        console.log(`⚠️  Все уроки уже существуют. Миграция не требуется.`);
+        return;
       }
 
-      console.log(`✅ Создано ${allLessons.length} уроков для ${topicsResult.length} тем в дисциплине "${discipline.name}"`);
+      console.log(`✅ Создано ${allLessons.length} уроков для ${topicsResult.length} тем`);
 
       // Вставляем уроки батчами по 50 для эффективности
       const batchSize = 50;
@@ -287,15 +287,12 @@ export class AddLessonsToAllRemainingDisciplines1765500000000
             VALUES ${values}
             ON CONFLICT ("LessonID") DO NOTHING
           `);
-          console.log(`✅ Вставлен батч из ${batch.length} уроков для дисциплины "${discipline.name}"`);
+          console.log(`✅ Вставлен батч из ${batch.length} уроков`);
         } catch (error) {
-          console.error(`❌ Ошибка при вставке батча для "${discipline.name}":`, error);
+          console.error(`❌ Ошибка при вставке батча:`, error);
           // Продолжаем выполнение для других батчей
         }
       }
-      
-      console.log(`✅ Завершена обработка дисциплины "${discipline.name}"`);
-    }
     
     console.log('✅ Все уроки успешно добавлены!');
   } catch (error) {

@@ -32,6 +32,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       if (error?.message?.includes('Database connection')) {
         throw new UnauthorizedException('Database connection failed. Please try again later.');
       }
+      // Для всех остальных ошибок возвращаем стандартное сообщение
       throw new UnauthorizedException('Invalid email or password');
     }
   }

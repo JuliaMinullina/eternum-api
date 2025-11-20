@@ -26,8 +26,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
         const responseObj = exceptionResponse as any;
-        message = responseObj.message || exception.message;
+        // Для массива сообщений берем первое, иначе само сообщение
+        if (Array.isArray(responseObj.message)) {
+          message = responseObj.message[0] || exception.message;
+        } else {
+          message = responseObj.message || exception.message;
+        }
         errors = responseObj.errors || null;
+      }
+      
+      // Специальная обработка для UnauthorizedException
+      if (status === HttpStatus.UNAUTHORIZED) {
+        console.error('🔐 Unauthorized error:', {
+          message,
+          path: request.url,
+          method: request.method,
+        });
       }
     } else if (exception instanceof Error) {
       message = exception.message;

@@ -53,25 +53,42 @@ export class AuthController {
   @Post('login')
   async login(@Request() req, @Response() res) {
     try {
-      console.log('🔐 Login attempt for:', req.user?.Email || 'unknown');
+      console.log('🔐 Login endpoint called');
+      console.log('🔐 Request user:', req.user ? 'exists' : 'missing');
+      console.log('🔐 User email:', req.user?.Email || 'unknown');
 
       // LocalAuthGuard уже валидировал пользователя через LocalStrategy
       // и установил req.user, поэтому просто используем его
       const user = req.user;
       
       if (!user) {
-        throw new UnauthorizedException('Invalid email or password');
+        console.log('🔐 No user in request, returning error');
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid email or password',
+          timestamp: new Date().toISOString(),
+        });
       }
 
       if (!user.isActive) {
-        throw new UnauthorizedException('Account is deactivated');
+        console.log('🔐 User account is deactivated');
+        return res.status(401).json({
+          success: false,
+          message: 'Account is deactivated',
+          timestamp: new Date().toISOString(),
+        });
       }
 
+      console.log('🔐 User validated, generating tokens');
       const result = await this.authService.login(user);
       console.log('🔐 Login successful, returning tokens in body (no cookies)');
       return res.json(result);
     } catch (error) {
-      console.error('Error in login:', error);
+      console.error('🔐 Error in login controller:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name,
+      });
       if (error instanceof UnauthorizedException) {
         return res.status(401).json({
           success: false,

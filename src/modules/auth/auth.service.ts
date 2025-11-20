@@ -26,12 +26,25 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<any> {
     try {
+      console.log('🔐 AuthService.validateUser: Looking for user with email:', email);
       const user = await this.userService.findByEmail(email);
-      if (user && (await bcrypt.compare(password, user.password))) {
-        const { password, ...result } = user;
-        return result;
+      
+      if (!user) {
+        console.log('🔐 AuthService.validateUser: User not found');
+        return null;
       }
-      return null;
+      
+      console.log('🔐 AuthService.validateUser: User found, comparing password');
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      
+      if (!isPasswordValid) {
+        console.log('🔐 AuthService.validateUser: Password incorrect');
+        return null;
+      }
+      
+      console.log('🔐 AuthService.validateUser: Password correct, returning user');
+      const { password: _, ...result } = user;
+      return result;
     } catch (error: any) {
       // Обработка ошибок подключения к базе данных
       if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND' || error?.message?.includes('connect')) {
@@ -39,7 +52,11 @@ export class AuthService {
         throw new Error('Database connection failed. Please ensure PostgreSQL is running.');
       }
       // Пробрасываем другие ошибки
-      console.error('❌ Error validating user:', error);
+      console.error('❌ Error validating user:', {
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack,
+      });
       throw error;
     }
   }

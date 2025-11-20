@@ -31,6 +31,9 @@ RUN npm ci --only=production
 # Копируем собранное приложение из builder stage
 COPY --from=builder /app/dist ./dist
 
+# Копируем скрипты для миграций
+COPY --from=builder /app/scripts ./scripts
+
 # Копируем скрипт запуска
 COPY start.sh /app/start.sh
 

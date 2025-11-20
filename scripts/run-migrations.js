@@ -31,7 +31,7 @@ console.log('');
 // STEP 2: Config File Check
 // ============================================
 console.log('📋 STEP 2: Checking config file...');
-const configPath = path.join(__dirname, '../dist/config/typeorm.config.prod.js');
+const configPath = path.join(__dirname, '../dist/config/typeorm.config.js');
 console.log(`   Config path: ${configPath}`);
 
 if (!fs.existsSync(configPath)) {
@@ -51,9 +51,23 @@ console.log('');
 console.log('📋 STEP 3: Loading TypeORM config...');
 let dataSource;
 try {
-  dataSource = require(configPath);
-  console.log('   ✅ Config loaded successfully');
-  console.log(`   DataSource type: ${dataSource.type || 'unknown'}`);
+  const configModule = require(configPath);
+  // TypeORM config может быть экспортирован как default или как именованный экспорт
+  dataSource = configModule.default || configModule;
+  
+  // Если это DataSource, используем его напрямую
+  if (dataSource && typeof dataSource.initialize === 'function') {
+    console.log('   ✅ Config loaded successfully (DataSource instance)');
+  } else if (dataSource && dataSource.type) {
+    // Если это конфиг объект, создаем DataSource
+    const { DataSource } = require('typeorm');
+    dataSource = new DataSource(dataSource);
+    console.log('   ✅ Config loaded successfully (config object)');
+  } else {
+    throw new Error('Invalid config format');
+  }
+  
+  console.log(`   DataSource type: ${dataSource.options?.type || 'unknown'}`);
   console.log(`   Database: ${dataSource.options?.database || 'unknown'}`);
   console.log(`   Host: ${dataSource.options?.host || 'unknown'}`);
   console.log(`   Port: ${dataSource.options?.port || 'unknown'}`);

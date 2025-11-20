@@ -68,13 +68,15 @@ import { Profile } from './modules/profile/profile.entity';
       // Не падаем при ошибках подключения, обрабатываем их в запросах
       extra: {
         max: 20,
-        connectionTimeoutMillis: 1000, // Очень быстрый таймаут - 1 секунда
+        connectionTimeoutMillis: 500, // Очень быстрый таймаут - 0.5 секунды
         idleTimeoutMillis: 30000,
       },
       // Продолжаем работу даже при ошибках подключения
       autoLoadEntities: true,
       // Не валидируем подключение при старте
       logging: false, // Отключаем логирование для быстрого старта
+      // Пытаемся подключиться, но не падаем при ошибке
+      connectTimeoutMS: 500,
     }),
     UserModule,
     AuthModule,

@@ -27,40 +27,64 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
-    // Проверяем, существует ли пользователь с таким email
-    const existingUser = await this.userService.findByEmail(registerDto.Email);
-    if (existingUser) {
-      throw new UnauthorizedException('User with this email already exists');
+    try {
+      // Проверяем, существует ли пользователь с таким email
+      const existingUser = await this.userService.findByEmail(registerDto.Email);
+      if (existingUser) {
+        throw new UnauthorizedException('User with this email already exists');
+      }
+
+      // Создаем пользователя
+      const user = await this.userService.create(registerDto);
+
+      // Логиним пользователя
+      const result = await this.authService.login(user);
+      return result;
+    } catch (error) {
+      console.error('Error in register:', error);
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Registration failed. Please try again.');
     }
-
-    // Создаем пользователя
-    const user = await this.userService.create(registerDto);
-
-    // Логиним пользователя
-    const result = await this.authService.login(user);
-    return result;
   }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@Request() req, @Response() res) {
-    console.log('🔐 Login attempt for:', req.user?.Email || 'unknown');
+    try {
+      console.log('🔐 Login attempt for:', req.user?.Email || 'unknown');
 
-    // LocalAuthGuard уже валидировал пользователя через LocalStrategy
-    // и установил req.user, поэтому просто используем его
-    const user = req.user;
-    
-    if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      // LocalAuthGuard уже валидировал пользователя через LocalStrategy
+      // и установил req.user, поэтому просто используем его
+      const user = req.user;
+      
+      if (!user) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+
+      if (!user.isActive) {
+        throw new UnauthorizedException('Account is deactivated');
+      }
+
+      const result = await this.authService.login(user);
+      console.log('🔐 Login successful, returning tokens in body (no cookies)');
+      return res.json(result);
+    } catch (error) {
+      console.error('Error in login:', error);
+      if (error instanceof UnauthorizedException) {
+        return res.status(401).json({
+          success: false,
+          message: error.message || 'Invalid email or password',
+          timestamp: new Date().toISOString(),
+        });
+      }
+      return res.status(500).json({
+        success: false,
+        message: 'Login failed. Please try again.',
+        timestamp: new Date().toISOString(),
+      });
     }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
-    }
-
-    const result = await this.authService.login(user);
-    console.log('🔐 Login successful, returning tokens in body (no cookies)');
-    return res.json(result);
   }
 
   @Post('refresh')
@@ -68,16 +92,37 @@ export class AuthController {
     @Body() refreshTokenDto: RefreshTokenDto,
     @Response() res,
   ) {
-    const result = await this.authService.refreshAccessToken(
-      refreshTokenDto.refresh_token,
-    );
-    return res.json(result);
+    try {
+      const result = await this.authService.refreshAccessToken(
+        refreshTokenDto.refresh_token,
+      );
+      return res.json(result);
+    } catch (error) {
+      console.error('Error in refreshToken:', error);
+      if (error instanceof UnauthorizedException) {
+        return res.status(401).json({
+          success: false,
+          message: error.message || 'Invalid refresh token',
+          timestamp: new Date().toISOString(),
+        });
+      }
+      return res.status(500).json({
+        success: false,
+        message: 'Token refresh failed. Please try again.',
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
-    return this.authService.getProfile(req.user.UserID);
+    try {
+      return await this.authService.getProfile(req.user.UserID);
+    } catch (error) {
+      console.error('Error in getProfile:', error);
+      throw new UnauthorizedException('Failed to get user profile');
+    }
   }
 
   @UseGuards(JwtAuthGuard)
@@ -95,7 +140,16 @@ export class AuthController {
 
   @Post('logout')
   async logout(@Body() logoutDto: LogoutDto, @Request() req, @Response() res) {
-    const result = await this.authService.logout(logoutDto.refresh_token);
-    return result;
+    try {
+      const result = await this.authService.logout(logoutDto.refresh_token);
+      return res.json(result);
+    } catch (error) {
+      console.error('Error in logout:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Logout failed. Please try again.',
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 }

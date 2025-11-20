@@ -45,104 +45,122 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload: JwtPayload = {
-      UserID: user.UserID,
-      UserName: user.UserName,
-      UserSurname: user.UserSurname,
-      Email: user.Email,
-      Role: user.Role,
-    };
-
-    // Создаем access token (24 часа)
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '24h' });
-
-    // Создаем refresh token (72 часа)
-    const refreshToken = await this.createRefreshToken(user.UserID);
-
-    // Записываем ежедневный вход (неблокирующая операция)
     try {
-      await this.userService.recordDailyLogin(user.UserID);
-    } catch (error) {
-      // Логируем ошибку, но не прерываем процесс логина
-      console.error('Ошибка записи ежедневного входа:', error);
-    }
-
-    console.log('🔐 AuthService: Tokens generated');
-    console.log('Access token length:', accessToken.length);
-    console.log('Refresh token length:', refreshToken.token.length);
-
-    return {
-      access_token: accessToken,
-      refresh_token: refreshToken.token,
-      expires_in: 24 * 60 * 60, // 24 часа в секундах
-      user: {
+      const payload: JwtPayload = {
         UserID: user.UserID,
         UserName: user.UserName,
         UserSurname: user.UserSurname,
         Email: user.Email,
         Role: user.Role,
-      },
-    };
+      };
+
+      // Создаем access token (24 часа)
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '24h' });
+
+      // Создаем refresh token (72 часа)
+      const refreshToken = await this.createRefreshToken(user.UserID);
+
+      // Записываем ежедневный вход (неблокирующая операция)
+      try {
+        await this.userService.recordDailyLogin(user.UserID);
+      } catch (error) {
+        // Логируем ошибку, но не прерываем процесс логина
+        console.error('Ошибка записи ежедневного входа:', error);
+      }
+
+      console.log('🔐 AuthService: Tokens generated');
+      console.log('Access token length:', accessToken.length);
+      console.log('Refresh token length:', refreshToken.token.length);
+
+      return {
+        access_token: accessToken,
+        refresh_token: refreshToken.token,
+        expires_in: 24 * 60 * 60, // 24 часа в секундах
+        user: {
+          UserID: user.UserID,
+          UserName: user.UserName,
+          UserSurname: user.UserSurname,
+          Email: user.Email,
+          Role: user.Role,
+        },
+      };
+    } catch (error) {
+      console.error('Error in authService.login:', error);
+      throw new UnauthorizedException('Failed to generate authentication tokens');
+    }
   }
 
   private async createRefreshToken(userId: string): Promise<RefreshToken> {
-    // Генерируем случайный токен
-    const token = crypto.randomBytes(64).toString('hex');
+    try {
+      // Генерируем случайный токен
+      const token = crypto.randomBytes(64).toString('hex');
 
-    // Создаем refresh token с истечением через 72 часа
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 72);
+      // Создаем refresh token с истечением через 72 часа
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 72);
 
-    const refreshToken = this.refreshTokenRepository.create({
-      token,
-      userId,
-      expiresAt,
-    });
+      const refreshToken = this.refreshTokenRepository.create({
+        token,
+        userId,
+        expiresAt,
+      });
 
-    return await this.refreshTokenRepository.save(refreshToken);
+      return await this.refreshTokenRepository.save(refreshToken);
+    } catch (error) {
+      console.error('Error creating refresh token:', error);
+      throw new UnauthorizedException('Failed to create refresh token');
+    }
   }
 
   async refreshAccessToken(refreshTokenString: string) {
-    // Находим refresh token в базе
-    const refreshToken = await this.refreshTokenRepository.findOne({
-      where: { token: refreshTokenString, isRevoked: false },
-      relations: ['user'],
-    });
+    try {
+      // Находим refresh token в базе
+      const refreshToken = await this.refreshTokenRepository.findOne({
+        where: { token: refreshTokenString, isRevoked: false },
+        relations: ['user'],
+      });
 
-    if (!refreshToken) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
+      if (!refreshToken) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
 
-    // Проверяем, не истек ли токен
-    if (new Date() > refreshToken.expiresAt) {
-      // Помечаем токен как отозванный
-      refreshToken.isRevoked = true;
-      await this.refreshTokenRepository.save(refreshToken);
-      throw new UnauthorizedException('Refresh token expired');
-    }
+      // Проверяем, не истек ли токен
+      if (new Date() > refreshToken.expiresAt) {
+        // Помечаем токен как отозванный
+        refreshToken.isRevoked = true;
+        await this.refreshTokenRepository.save(refreshToken);
+        throw new UnauthorizedException('Refresh token expired');
+      }
 
-    // Создаем новый access token
-    const payload: JwtPayload = {
-      UserID: refreshToken.user.UserID,
-      UserName: refreshToken.user.UserName,
-      UserSurname: refreshToken.user.UserSurname,
-      Email: refreshToken.user.Email,
-      Role: refreshToken.user.Role,
-    };
-
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '24h' });
-
-    return {
-      access_token: accessToken,
-      expires_in: 24 * 60 * 60, // 24 часа в секундах
-      user: {
+      // Создаем новый access token
+      const payload: JwtPayload = {
         UserID: refreshToken.user.UserID,
         UserName: refreshToken.user.UserName,
         UserSurname: refreshToken.user.UserSurname,
         Email: refreshToken.user.Email,
         Role: refreshToken.user.Role,
-      },
-    };
+      };
+
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '24h' });
+
+      return {
+        access_token: accessToken,
+        expires_in: 24 * 60 * 60, // 24 часа в секундах
+        user: {
+          UserID: refreshToken.user.UserID,
+          UserName: refreshToken.user.UserName,
+          UserSurname: refreshToken.user.UserSurname,
+          Email: refreshToken.user.Email,
+          Role: refreshToken.user.Role,
+        },
+      };
+    } catch (error) {
+      console.error('Error in refreshAccessToken:', error);
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Failed to refresh access token');
+    }
   }
 
   async logout(refreshTokenString: string) {

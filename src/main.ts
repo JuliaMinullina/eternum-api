@@ -6,29 +6,12 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  let app;
   try {
     // Создаем приложение с опцией не падать при ошибках подключения к БД
-    try {
-      app = await NestFactory.create(AppModule, {
-        abortOnError: false, // Не падаем при ошибках
-        logger: ['error', 'warn', 'log'], // Логируем только важное
-      });
-    } catch (dbError: any) {
-      // Если ошибка связана с БД, логируем и продолжаем
-      if (dbError?.message?.includes('could not write init file') || 
-          dbError?.message?.includes('connection') ||
-          dbError?.code === 'XX000') {
-        console.error('⚠️  Database connection error during app creation, but continuing...', dbError.message);
-        // Пытаемся создать приложение еще раз, игнорируя ошибки БД
-        app = await NestFactory.create(AppModule, {
-          abortOnError: false,
-          logger: false, // Отключаем логирование для избежания повторных ошибок
-        });
-      } else {
-        throw dbError;
-      }
-    }
+    const app = await NestFactory.create(AppModule, {
+      abortOnError: false, // Не падаем при ошибках
+      logger: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['error', 'warn', 'log'],
+    });
 
     // Подключаем cookie-parser
     app.use(cookieParser());

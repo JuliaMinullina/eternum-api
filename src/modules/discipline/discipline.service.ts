@@ -13,13 +13,21 @@ export class DisciplineService {
   ) {}
 
   async findAll(): Promise<Discipline[]> {
-    // Используем QueryBuilder для явной загрузки relations
-    return this.disciplineRepository
-      .createQueryBuilder('discipline')
-      .leftJoinAndSelect('discipline.disciplineMetaTags', 'disciplineMetaTag')
-      .leftJoinAndSelect('disciplineMetaTag.metaTag', 'metaTag')
-      .orderBy('discipline.ID', 'ASC')
-      .getMany();
+    try {
+      // Используем QueryBuilder для явной загрузки relations
+      const disciplines = await this.disciplineRepository
+        .createQueryBuilder('discipline')
+        .leftJoinAndSelect('discipline.disciplineMetaTags', 'disciplineMetaTag')
+        .leftJoinAndSelect('disciplineMetaTag.metaTag', 'metaTag')
+        .orderBy('discipline.ID', 'ASC')
+        .getMany();
+      
+      return disciplines || [];
+    } catch (error: any) {
+      console.error('Error in disciplineService.findAll:', error);
+      // Пробрасываем ошибку, чтобы контроллер мог её обработать
+      throw error;
+    }
   }
 
   async findOne(id: string): Promise<Discipline> {

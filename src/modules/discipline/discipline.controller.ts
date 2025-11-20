@@ -30,14 +30,10 @@ export class DisciplineController {
         data: disciplines || [],
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in findAll disciplines:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Error retrieving disciplines',
-        data: [],
-        timestamp: new Date().toISOString(),
-      };
+      // Пробрасываем ошибку, чтобы фронтенд видел проблему
+      throw error;
     }
   }
 

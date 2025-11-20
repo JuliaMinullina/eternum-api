@@ -7,7 +7,10 @@ import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   try {
-    const app = await NestFactory.create(AppModule);
+    // Создаем приложение с опцией не падать при ошибках подключения к БД
+    const app = await NestFactory.create(AppModule, {
+      abortOnError: false, // Не падаем при ошибках
+    });
 
     // Подключаем cookie-parser
     app.use(cookieParser());

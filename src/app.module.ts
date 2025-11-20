@@ -36,41 +36,46 @@ import { Profile } from './modules/profile/profile.entity';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'password',
-      database: process.env.DB_NAME || 'eternum_db',
-      entities: [
-        User,
-        Discipline,
-        Topic,
-        Lesson,
-        ViewHistory,
-        MetaTag,
-        DisciplineMetaTag,
-        RefreshToken,
-        Chat,
-        Message,
-        RecommendedTrack,
-        TrackItem,
-        UserDailyLogin,
-        Profile,
-      ],
-      migrations: [__dirname + '/migrations/*{.ts,.js}'],
-      migrationsRun: false, // Миграции запускаются вручную через start.sh
-      synchronize: false,
-      // Настройки для обработки ошибок подключения
-      retryAttempts: 5,
-      retryDelay: 3000,
-      // Не падаем при ошибках подключения, обрабатываем их в запросах
-      extra: {
-        max: 20,
-        connectionTimeoutMillis: 10000,
-        idleTimeoutMillis: 30000,
-      },
+    TypeOrmModule.forRootAsync({
+      useFactory: () => ({
+        type: 'postgres',
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        username: process.env.DB_USERNAME || 'postgres',
+        password: process.env.DB_PASSWORD || 'password',
+        database: process.env.DB_NAME || 'eternum_db',
+        entities: [
+          User,
+          Discipline,
+          Topic,
+          Lesson,
+          ViewHistory,
+          MetaTag,
+          DisciplineMetaTag,
+          RefreshToken,
+          Chat,
+          Message,
+          RecommendedTrack,
+          TrackItem,
+          UserDailyLogin,
+          Profile,
+        ],
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
+        migrationsRun: false, // Миграции запускаются вручную через start.sh
+        synchronize: false,
+        // Настройки для обработки ошибок подключения
+        retryAttempts: 3, // Уменьшаем количество попыток
+        retryDelay: 2000,
+        // Не падаем при ошибках подключения, обрабатываем их в запросах
+        extra: {
+          max: 20,
+          connectionTimeoutMillis: 5000, // Уменьшаем таймаут
+          idleTimeoutMillis: 30000,
+        },
+        // Продолжаем работу даже при ошибках подключения
+        autoLoadEntities: true,
+      }),
+      // Обрабатываем ошибки подключения gracefully
     }),
     UserModule,
     AuthModule,

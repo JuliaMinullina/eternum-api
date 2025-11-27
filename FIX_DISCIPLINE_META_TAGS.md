@@ -163,3 +163,4 @@ DROP TABLE IF EXISTS "discipline_meta_tags";
 - Entity файл: `src/entities/discipline-meta-tag.entity.ts`
 - Документация по миграциям: `MIGRATIONS.md`
 
+

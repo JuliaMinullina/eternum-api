@@ -8,18 +8,113 @@ export class FixTopicDisciplineMapping1764360000000
   public async up(queryRunner: QueryRunner): Promise<void> {
     console.log('🔧 Исправляю привязку тем к дисциплинам...');
 
-    // ID дисциплин (используем реальные ID из базы)
-    const SPANISH_DISCIPLINE_ID = 'd6a16086-e9c7-4636-aa76-d5eb7e516242'; // Испанский язык (используем ID, который сейчас у МХК, потом поменяем)
-    const FINE_ARTS_CULTURE_DISCIPLINE_ID = 'd6e5f4a3-9b2d-5028-1f3d-3a4b5c6d7e8f'; // МХК
-    const CULTUROLOGY_DISCIPLINE_ID = 'e7f6a5b4-0c3e-5139-2a4e-4b5c6d7e8f9a'; // Культурология
-    const PSYCHOLOGY_DISCIPLINE_ID = 'a9b8c7d6-2e5a-5351-4c6a-6d7e8f9a0b1c'; // Психология (но это Философия в базе!)
-    const PHILOSOPHY_DISCIPLINE_ID = 'f8a7b6c5-1d4f-5240-3b5f-5c6d7e8f9a0b'; // Философия (но это Психология в базе!)
-
-    // Сначала проверим и исправим ID дисциплин
-    // В базе: Философия имеет ID a9b8c7d6, а Психология - f8a7b6c5 (наоборот!)
-    // Но по seed-disciplines.ts должно быть: Философия f8a7b6c5, Психология a9b8c7d6
-    // Значит в базе они перепутаны, но мы не будем их менять, просто используем те ID, что есть
+    // Сначала находим или создаём все нужные дисциплины в базе
     
+    // Проверяем наличие дисциплины "Испанский язык"
+    const spanishDisc = await queryRunner.query(`
+      SELECT "DisciplineID" FROM "disciplines" 
+      WHERE "DisciplineName" LIKE '%Испанский%' OR "DisciplineName" LIKE '%испанский%'
+      LIMIT 1
+    `);
+    
+    let SPANISH_DISCIPLINE_ID = spanishDisc[0]?.DisciplineID;
+    
+    // ID для Испанского языка (из seed-spanish-topics.ts)
+    const EXPECTED_SPANISH_ID = 'd6a16086-e9c7-4636-aa76-d5eb7e516242';
+    
+    // Если дисциплина не найдена по имени, проверяем или создаём с нужным ID
+    if (!SPANISH_DISCIPLINE_ID) {
+      // Проверяем, существует ли дисциплина с ожидаемым ID
+      const discWithExpectedId = await queryRunner.query(`
+        SELECT "DisciplineID", "DisciplineName" FROM "disciplines" 
+        WHERE "DisciplineID" = $1
+      `, [EXPECTED_SPANISH_ID]);
+      
+      if (discWithExpectedId[0]) {
+        // ID существует - используем его (неважно, какая там дисциплина)
+        SPANISH_DISCIPLINE_ID = discWithExpectedId[0].DisciplineID;
+        console.log(`✅ Используем существующую дисциплину "${discWithExpectedId[0].DisciplineName}" с ID ${SPANISH_DISCIPLINE_ID} для Испанского языка`);
+      } else {
+        // ID не существует - создаём дисциплину с нужным ID
+        const maxId = await queryRunner.query(`
+          SELECT MAX("ID") as max_id FROM "disciplines"
+        `);
+        const nextId = (maxId[0]?.max_id || 0) + 1;
+        
+        await queryRunner.query(`
+          INSERT INTO "disciplines" ("DisciplineID", "ID", "DisciplineName", "CreatedAt", "UpdatedAt")
+          VALUES ($1, $2, 'Иностранный язык — Испанский', NOW(), NOW())
+          ON CONFLICT ("DisciplineID") DO NOTHING
+        `, [EXPECTED_SPANISH_ID, nextId]);
+        
+        // Проверяем, что дисциплина создана
+        const createdDisc = await queryRunner.query(`
+          SELECT "DisciplineID" FROM "disciplines" 
+          WHERE "DisciplineID" = $1
+        `, [EXPECTED_SPANISH_ID]);
+        
+        SPANISH_DISCIPLINE_ID = createdDisc[0]?.DisciplineID || EXPECTED_SPANISH_ID;
+        console.log(`✅ Создана дисциплина "Иностранный язык — Испанский" с ID ${SPANISH_DISCIPLINE_ID}`);
+      }
+    } else {
+      console.log(`✅ Найдена дисциплина Испанского языка с ID ${SPANISH_DISCIPLINE_ID}`);
+    }
+
+    // Проверяем остальные дисциплины и создаём, если не найдены
+    const mhkDisc = await queryRunner.query(`
+      SELECT "DisciplineID" FROM "disciplines" WHERE "DisciplineName" = 'Мировая художественная культура'
+    `);
+    let FINE_ARTS_CULTURE_DISCIPLINE_ID = mhkDisc[0]?.DisciplineID;
+    
+    if (!FINE_ARTS_CULTURE_DISCIPLINE_ID) {
+      // Проверяем, существует ли дисциплина с ожидаемым ID
+      const expectedMhkId = 'd6e5f4a3-9b2d-5028-1f3d-3a4b5c6d7e8f';
+      const checkMhk = await queryRunner.query(`
+        SELECT "DisciplineID" FROM "disciplines" WHERE "DisciplineID" = $1
+      `, [expectedMhkId]);
+      
+      if (checkMhk[0]) {
+        FINE_ARTS_CULTURE_DISCIPLINE_ID = checkMhk[0].DisciplineID;
+      } else {
+        // Создаём дисциплину
+        const maxId = await queryRunner.query(`SELECT MAX("ID") as max_id FROM "disciplines"`);
+        const nextId = (maxId[0]?.max_id || 0) + 1;
+        await queryRunner.query(`
+          INSERT INTO "disciplines" ("DisciplineID", "ID", "DisciplineName", "CreatedAt", "UpdatedAt")
+          VALUES ($1, $2, 'Мировая художественная культура', NOW(), NOW())
+          ON CONFLICT ("DisciplineID") DO NOTHING
+        `, [expectedMhkId, nextId]);
+        FINE_ARTS_CULTURE_DISCIPLINE_ID = expectedMhkId;
+        console.log(`✅ Создана дисциплина "Мировая художественная культура" с ID ${FINE_ARTS_CULTURE_DISCIPLINE_ID}`);
+      }
+    }
+
+    const culturologyDisc = await queryRunner.query(`
+      SELECT "DisciplineID" FROM "disciplines" WHERE "DisciplineName" = 'Культурология'
+    `);
+    let CULTUROLOGY_DISCIPLINE_ID = culturologyDisc[0]?.DisciplineID;
+    
+    if (!CULTUROLOGY_DISCIPLINE_ID) {
+      const expectedCultId = 'e7f6a5b4-0c3e-5139-2a4e-4b5c6d7e8f9a';
+      const checkCult = await queryRunner.query(`
+        SELECT "DisciplineID" FROM "disciplines" WHERE "DisciplineID" = $1
+      `, [expectedCultId]);
+      
+      if (checkCult[0]) {
+        CULTUROLOGY_DISCIPLINE_ID = checkCult[0].DisciplineID;
+      } else {
+        const maxId = await queryRunner.query(`SELECT MAX("ID") as max_id FROM "disciplines"`);
+        const nextId = (maxId[0]?.max_id || 0) + 1;
+        await queryRunner.query(`
+          INSERT INTO "disciplines" ("DisciplineID", "ID", "DisciplineName", "CreatedAt", "UpdatedAt")
+          VALUES ($1, $2, 'Культурология', NOW(), NOW())
+          ON CONFLICT ("DisciplineID") DO NOTHING
+        `, [expectedCultId, nextId]);
+        CULTUROLOGY_DISCIPLINE_ID = expectedCultId;
+        console.log(`✅ Создана дисциплина "Культурология" с ID ${CULTUROLOGY_DISCIPLINE_ID}`);
+      }
+    }
+
     // Проверяем реальные ID из базы
     const philosophyInDb = await queryRunner.query(`
       SELECT "DisciplineID" FROM "disciplines" WHERE "DisciplineName" = 'Философия'
@@ -28,11 +123,35 @@ export class FixTopicDisciplineMapping1764360000000
       SELECT "DisciplineID" FROM "disciplines" WHERE "DisciplineName" = 'Общая психология'
     `);
     
-    const REAL_PHILOSOPHY_ID = philosophyInDb[0]?.DisciplineID || PHILOSOPHY_DISCIPLINE_ID;
-    const REAL_PSYCHOLOGY_ID = psychologyInDb[0]?.DisciplineID || PSYCHOLOGY_DISCIPLINE_ID;
+    const REAL_PHILOSOPHY_ID = philosophyInDb[0]?.DisciplineID || 'f8a7b6c5-1d4f-5240-3b5f-5c6d7e8f9a0b';
+    const REAL_PSYCHOLOGY_ID = psychologyInDb[0]?.DisciplineID || 'a9b8c7d6-2e5a-5351-4c6a-6d7e8f9a0b1c';
     
+    console.log(`МХК ID: ${FINE_ARTS_CULTURE_DISCIPLINE_ID}`);
+    console.log(`Культурология ID: ${CULTUROLOGY_DISCIPLINE_ID}`);
     console.log(`Философия ID: ${REAL_PHILOSOPHY_ID}`);
     console.log(`Психология ID: ${REAL_PSYCHOLOGY_ID}`);
+    console.log(`Испанский ID: ${SPANISH_DISCIPLINE_ID}`);
+
+    // Проверяем, что все ID существуют в базе перед обновлением
+    const allDisciplineIds = [
+      SPANISH_DISCIPLINE_ID,
+      FINE_ARTS_CULTURE_DISCIPLINE_ID,
+      CULTUROLOGY_DISCIPLINE_ID,
+      REAL_PHILOSOPHY_ID,
+      REAL_PSYCHOLOGY_ID,
+    ];
+
+    for (const disciplineId of allDisciplineIds) {
+      const check = await queryRunner.query(`
+        SELECT "DisciplineID" FROM "disciplines" WHERE "DisciplineID" = $1
+      `, [disciplineId]);
+      
+      if (!check || check.length === 0) {
+        throw new Error(`Дисциплина с ID ${disciplineId} не найдена в базе данных. Миграция не может быть выполнена.`);
+      }
+    }
+    
+    console.log('✅ Все дисциплины найдены в базе данных');
 
     // TopicID тем из МХК (должны перейти в Испанский)
     const mhkTopicIds = [

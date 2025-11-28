@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 
@@ -40,4 +41,7 @@ export class Lesson {
   @ManyToOne('Topic', 'Lessons')
   @JoinColumn({ name: 'TopicID' })
   topic: any;
+
+  @OneToMany('Material', 'lesson')
+  Materials: any[];
 }

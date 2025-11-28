@@ -30,6 +30,8 @@ import { RecommendedTrackModule } from './modules/recommended-track/recommended-
 import { UserDailyLogin } from './modules/user/user-daily-login.entity';
 import { ProfileModule } from './modules/profile/profile.module';
 import { Profile } from './modules/profile/profile.entity';
+import { MaterialModule } from './modules/material/material.module';
+import { Material } from './modules/material/material.entity';
 
 @Module({
   imports: [
@@ -58,6 +60,7 @@ import { Profile } from './modules/profile/profile.entity';
         TrackItem,
         UserDailyLogin,
         Profile,
+        Material,
       ],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
       migrationsRun: false, // Миграции запускаются вручную через start.sh
@@ -87,6 +90,7 @@ import { Profile } from './modules/profile/profile.entity';
     ChatModule,
     RecommendedTrackModule,
     ProfileModule,
+    MaterialModule,
   ],
   controllers: [AppController],
   providers: [AppService, AdminSeedGuard],
